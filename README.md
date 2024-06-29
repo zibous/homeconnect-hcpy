@@ -1086,7 +1086,7 @@ Instead of MQTT Discovery, I use an MQTT template (see directory `/homeassistant
 <br/>
 <br/>
 
-## Additional Infoemation
+## Additional Informations
 
 
 - [Python tool to talk to Home Connect appliances osresearch/hcpy](https://github.com/osresearch/hcpy)
