@@ -1,11 +1,4 @@
 # Homeconnect  - hcpy for Bosch Dishwasher
-"markdown.styles": [
-<style>
-	H1{color:Blue !important;}
-	H2{color:DarkOrange !important;}
-	i{color:RED !important;}
-</style>
-]
 
 [![License][license-shield]][license]
 [![Open in Visual Studio Code][open-in-vscode-shield]][open-in-vscode]
