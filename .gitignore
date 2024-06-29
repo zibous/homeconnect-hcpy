@@ -52,3 +52,5 @@ config/**
 **/.zip
 **/test
 
+hcpy/bosch/012090517380017161.zip
+/hcpy/bosch
