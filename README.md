@@ -1,4 +1,5 @@
 # Homeconnect  - hcpy for Bosch Dishwasher
+
 <style>
 	H1{color:Blue !important;}
 	H2{color:DarkOrange !important;}
@@ -15,7 +16,7 @@
 [license]: https://opensource.org/licenses/MIT
 
 [open-in-vscode-shield]: https://img.shields.io/static/v1?label=+&message=Open+in+VSCode&color=blue&logo=visualstudiocode
-[open-in-vscode]: https://open.vscode.dev/zibous/ha-watermeter
+[open-in-vscode]: https://open.vscode.dev/zibous/homeconnect-hcpy
 
 [donate-me-shield]: https://img.shields.io/static/v1?label=+&color=orange&message=Buy+me+a+coffee
 [donate-me]: https://www.buymeacoff.ee/zibous
