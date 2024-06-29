@@ -48,7 +48,7 @@ config.py
 internal/
 test.py
 config/**
-bosch/**
+./hcpy/bosch/**
 **/.zip
 **/test
 
