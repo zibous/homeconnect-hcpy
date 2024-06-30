@@ -51,15 +51,15 @@ I have had good experiences with `pyenv` With `pyenv` you can use your own Pytho
 Go to your desired test directory, and:
 
 ```bash
-pyenv --version
-pyenv install 3.10.14
-pyenv virtualenv 3.10.14 apps
-pyenv local apps
-git clone https://github.com/hcpy2-0/hcpy
-cd hcpy
-pip install -r requirements.txt
-pip install pipreqs
-pip install pyclean
+⚡ user@linux: pyenv --version
+⚡ user@linux: pyenv install 3.10.14
+⚡ user@linux: pyenv virtualenv 3.10.14 apps
+⚡ user@linux: pyenv local apps
+⚡ user@linux: git clone https://github.com/hcpy2-0/hcpy
+⚡ user@linux: cd hcpy
+⚡ user@linux: pip install -r requirements.txt
+⚡ user@linux: pip install pipreqs
+⚡ user@linux: pip install pyclean
 ```
 
 ## Docker APP
@@ -81,6 +81,9 @@ pyclean . --debris --verbose
 echo "Try to remove previuos installation..."
 docker stop ${CONTAINERLABEL} >/dev/null 2>&1
 docker rm ${CONTAINERLABEL} >/dev/null 2>&1
+
+echo "Try to remove docker logs for ${CONTAINERLABEL} ..."
+rm "/var/log/docker/hostnam_${CONTAINERLABEL}.log"
 
 echo "Build Docker Image ${DOCKERIMAGE}..."
 docker build -t ${DOCKERIMAGE} .
@@ -115,7 +118,7 @@ features and options.
 <br/>
 
 ```bash
-python hc-login.py singlekey.id.email singlekey.id.password >config/devices.json
+  ⚡ user@linux: python hc-login.py singlekey.id.email singlekey.id.password >config/devices.json
 ```
 
 This only needs to be done once or when you add new devices;
@@ -144,7 +147,8 @@ Use the following ./config/config.json example:
     "mqtt_clientname": "lab.hcapp",
     "domain_suffix":"",
     "debug": false,
-    "locale": "de",
+    "tzinfo": "Europe/Vaduz",
+    "locale": "de-de",
     "LOGLEVEL": "DEBUG"
 }
 ```
@@ -158,40 +162,47 @@ After the config.json and devices.json are in the ./config directory, the applic
 <br/>
 
 ```bash
-user@linux /dockerapps/homeconnect:  python bosch.app
+⚡ user@linux: /dockerapps/homeconnect:  python bosch.app
 ```
 
-### Application logging
+### Application logging loguru.logger
 
-```ini
-2024-06-27 18:02:51.103730 MQTT connection established: 0
-2024-06-27 18:02:51.103879 dishwasher set topic: homeconnect/dishwasher/set
-2024-06-27 18:02:51.103987 dishwasher program topic: homeconnect/dishwasher/activeProgram
-2024-06-27 18:02:54.099795 dishwasher connecting to bosch-dishwasher.local
-2024-06-27 18:02:55.360850 DEBUGGER: WebSocketApp wss://bosch-dishwasher.local:443/homeconnect
-2024-06-27 18:02:55.570076 dishwasher Message resource: /ei/initialValues
-2024-06-27 18:02:55.675895 dishwasher Message resource: /ci/services
-2024-06-27 18:02:56.654911 dishwasher Message resource: /iz/info
-2024-06-27 18:02:56.655067 dishwasher publish state data to homeconnect/dishwasher/state
-2024-06-27 18:02:57.219164 dishwasher Message resource: /ci/registeredDevices
-2024-06-27 18:02:57.875598 dishwasher Message resource: /ni/info
-2024-06-27 18:02:57.875773 dishwasher publish state data to homeconnect/dishwasher/state
-2024-06-27 18:02:57.876867 dishwasher Message resource: /ni/config
-2024-06-27 18:02:57.880480 dishwasher Message resource: /ro/allMandatoryValues
-2024-06-27 18:02:57.881098 dishwasher Calc the water and energy usage
-2024-06-27 18:02:58.238171 dishwasher is currently not consuming any energy
-2024-06-27 18:02:58.791692 dishwasher does not need water at the moment
-2024-06-27 18:02:58.791904 dishwasher publish state data to homeconnect/dishwasher/state
-2024-06-27 18:02:58.792590 dishwasher Message resource: /ro/allDescriptionChanges
-2024-06-27 18:02:58.792657 dishwasher Access change for 555 to NONE
-2024-06-27 18:02:58.792745 dishwasher Access change for 558 to READWRITE
-2024-06-27 18:02:58.792810 dishwasher Access change for 5136 to READ
+```log
+2024-06-30 16:50:57.907 | INFO     | bosch.py:<module>:512 - APP homeconnect-hcpy, Version 1.1.1 starting
+2024-06-30 16:50:57.920 | DEBUG    | bosch.py:__loadSettings__:110 - Application config file./config/config.json found.
+2024-06-30 16:50:57.920 | DEBUG    | bosch.py:__loadSettings__:115 - Devices file ./config/devices.json found.
+2024-06-30 16:50:57.921 | DEBUG    | bosch.py:__loadSettings__:123 - Application ready to run
+2024-06-30 16:50:57.929 | INFO     | bosch.py:on_connect:325 - MQTT Brocker connection established: Success, homeconnect/LWT=Onine
+2024-06-30 16:50:57.930 | DEBUG    | bosch.py:on_connect:330 - dishwasher, set topic: homeconnect/dishwasher/set
+2024-06-30 16:50:57.930 | DEBUG    | bosch.py:on_connect:339 - dishwasher, program topic: homeconnect/dishwasher/activeProgram
+2024-06-30 16:51:00.924 | INFO     | bosch.py:client_connect:497 - dishwasher connecting to bosch-dishwasher.local
+2024-06-30 16:51:01.222 | INFO     | hcpy.HCSocket:run_forever:232 - Websocket connect wss://bosch-dishwasher.local:443/homeconnect
+2024-06-30 16:51:01.331 | INFO     | bosch.py:on_open:486 - MQTT Last Will dishwasher Topic=homeconnect/dishwasher/LWT Online
+2024-06-30 16:51:01.424 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /ei/initialValues
+2024-06-30 16:51:01.529 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /ci/services
+2024-06-30 16:51:02.492 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /iz/info
+2024-06-30 16:51:02.496 | INFO     | bosch.py:onStateChanged:301 - dishwasher publish state data to homeconnect/dishwasher/state
+2024-06-30 16:51:02.497 | INFO     | bosch.py:onStateChanged:306 - dishwasher publish send homeconnect/dishwasher/state
+2024-06-30 16:51:03.488 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /ci/registeredDevices
+2024-06-30 16:51:03.584 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /ni/info
+2024-06-30 16:51:03.585 | INFO     | bosch.py:onStateChanged:301 - dishwasher publish state data to homeconnect/dishwasher/state
+2024-06-30 16:51:03.585 | INFO     | bosch.py:onStateChanged:306 - dishwasher publish send homeconnect/dishwasher/state
+2024-06-30 16:51:03.604 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /ni/config
+2024-06-30 16:51:03.609 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /ro/allMandatoryValues
+2024-06-30 16:51:03.886 | INFO     | bosch.py:onStateChanged:301 - dishwasher publish state data to homeconnect/dishwasher/state
+2024-06-30 16:51:03.886 | INFO     | bosch.py:onStateChanged:306 - dishwasher publish send homeconnect/dishwasher/state
+2024-06-30 16:51:03.887 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /ro/allDescriptionChanges
+2024-06-30 16:52:24.937 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /ro/descriptionChange
+2024-06-30 16:52:24.941 | INFO     | hcpy.HCDevice:handle_message:336 - Message resource: /ro/values
 .... more will come here
 ```
 
 <br/><br/>
 
 ## What's Changed
+
+-  **NEW hcpy lib files**
+   - Replace print, dprint with `loguru.logger`
 
 - **h2mqtt.py**
    - `bosch.app` instead of `h2mqtt.py`
@@ -206,22 +217,22 @@ user@linux /dockerapps/homeconnect:  python bosch.app
 
   - **<span>Disabled Error 404,400</span>**
 
-     -  dishwasher Message **<i>Error: 404</i>**: ***/ci/authentication***<br/>
+     -  BOSCH SMV4HCX48E dishwasher Message **<i>Error: 404</i>**: ***/ci/authentication***<br/>
     	 `self.get("/ci/authentication", version=2, data={"nonce": self.token})` <br/>
 
-     - dishwasher Message **<i>Error: 404</i>**: ***/ci/info***<br/>
+     - BOSCH SMV4HCX48E dishwasher Message **<i>Error: 404</i>**: ***/ci/info***<br/>
 	     `self.get("/ci/info")  # clothes washer` <br/>
 
-     - dishwasher Message **<i>Error: 404</i>**: ***/ci/tzInfo***<br/>
+     - BOSCH SMV4HCX48E dishwasher Message **<i>Error: 404</i>**: ***/ci/tzInfo***<br/>
 		 `self.get("/ci/tzInfo")` <br/>
 
-	  - dishwasher Message **<i>Error: 404</i>**: ***/ni/config***<br/>
+	 -  BOSCH SMV4HCX48E dishwasher Message **<i>Error: 404</i>**: ***/ni/config***<br/>
 		 `self.get("/ni/config", data={"interfaceID": 0})`<br/>
 
-     - dishwasher Message **<i>Error: 400</i>** ***/ro/values***<br/>
+     - BOSCH SMV4HCX48E dishwasher Message **<i>Error: 400</i>** ***/ro/values***<br/>
 	     `self.get("/ro/values")` <br/>
 
--  **paho-mqtt Version: 2.1.0** <br>
+-  **NEW paho-mqtt Version: 2.1.0** <br>
     [MQTT version 5.0 client](https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html)
 
 
@@ -944,6 +955,17 @@ With the entries in the `addons` section, additional components can be created.
 For example, to record the energy and water consumption per session, a Sonoff device is used as
 a `power meter` and an `ESP water meter` is used for water consumption.
 
+<br/>
+
+- [Powermeter `Sonoff Pow`](https://tasmota.github.io/docs/devices/Sonoff-Pow/)
+- [Watermeter `ESPHome+ESP32+CC1101`](https://github.com/zibous/ha-watermeter)
+- Tabs Order Reminder
+- Operationtime
+- ... more will come
+
+<br/><br/>
+
+
 ```json
         ....
         "description": {
@@ -955,7 +977,7 @@ a `power meter` and an `ESP water meter` is used for water consumption.
         },
         "addons": {
             "installed": "2022-09-06 12:00:00",
-            "powermeter":"http://sonoff-dishwasher.siebler.home/cm?cmnd=status+8",
+            "powermeter":"http://sonoff-dishwasher.local/cm?cmnd=status+8",
             "watermeter":"http://water-meter-esp.local/sensor/wasseruhr_anzeige",
             "taps": 20,
             "taps_min": 5

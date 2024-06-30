@@ -40,12 +40,6 @@
 #
 # /iz/services
 
-# disabled for BOSCH SMV4HCX48E
-# - /ci/services: skip error 404 on reconnect
-# - /ci/authentication dishwasher Message Error: 404
-# - /ci/tzInfo dishwasher Message Error: 404
-# - /ro/values ERROR: dishwasher Message Error: 400 /ro/values
-
 import json
 import re
 import sys
@@ -57,8 +51,6 @@ from datetime import datetime
 
 from Crypto.Random import get_random_bytes
 
-## all for logging
-from loguru import logger
 
 def now():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -73,7 +65,7 @@ class HCDevice:
         self.session_id = None
         self.tx_msg_id = None
         self.device_name = "hcpy"
-        self.device_id = base64url_encode(get_random_bytes(6)).decode("UTF-8")
+        self.device_id = "0badcafe"
         self.debug = debug
         self.services_initialized = False
         self.services = {}
@@ -122,7 +114,10 @@ class HCDevice:
             uid = str(data["program"])
             with self.features_lock:
                 if uid not in self.features:
-                    raise ValueError(f"Unable to configure appliance. Program UID {uid} is not valid" " for this device.")
+                    raise ValueError(
+                        f"Unable to configure appliance. Program UID {uid} is not valid"
+                        " for this device."
+                    )
 
                 feature = self.features[uid]
                 # Diswasher is Dishcare.Dishwasher.Program.{name}
@@ -130,15 +125,21 @@ class HCDevice:
                 # May also be in the format BSH.Common.Program.Favorite.001
                 if "name" in feature:
                     if ".Program." not in feature["name"]:
-                        raise ValueError(f"Unable to configure appliance. Program UID {uid} is not a valid" f" program - {feature['name']}.")
+                        raise ValueError(
+                            f"Unable to configure appliance. Program UID {uid} is not a valid"
+                            f" program - {feature['name']}."
+                        )
                 else:
-                    logger.warning(f"Unknown Program UID {uid}")
+                    self.print(f"Unknown Program UID {uid}")
 
                 if "options" in data:
                     for option in data["options"]:
                         option_uid = option["uid"]
                         if str(option_uid) not in self.features:
-                            raise ValueError(f"Unable to configure appliance. Option UID {option_uid} is not" " valid for this device.")
+                            raise ValueError(
+                                f"Unable to configure appliance. Option UID {option_uid} is not"
+                                " valid for this device."
+                            )
 
     # Test the feature of an appliance agains a data object
     def test_feature(self, data_array):
@@ -161,19 +162,27 @@ class HCDevice:
                 feature = self.features[uid]
 
                 # check the access level of the feature
-                logger.debug(f"Processing feature {feature['name']} with uid {uid}")
+                self.print(f"Processing feature {feature['name']} with uid {uid}")
                 if "access" not in feature:
-                    raise Exception("Unable to configure appliance. " f"Feature {feature['name']} with uid {uid} does not have access.")
+                    raise Exception(
+                        "Unable to configure appliance. "
+                        f"Feature {feature['name']} with uid {uid} does not have access."
+                    )
 
                 access = feature["access"].lower()
                 if access != "readwrite" and access != "writeonly":
-                    raise Exception("Unable to configure appliance. " f"Feature {feature['name']} with uid {uid} " f"has got access {feature['access']}.")
+                    raise Exception(
+                        "Unable to configure appliance. "
+                        f"Feature {feature['name']} with uid {uid} "
+                        f"has got access {feature['access']}."
+                    )
 
                 # check if selected list with values is allowed
                 if "values" in feature:
                     if isinstance(data["value"], int) is False:
                         raise Exception(
-                            f"Unable to configure appliance. The value {data['value']} must " f"be an integer. Allowed values are {feature['values']}."
+                            f"Unable to configure appliance. The value {data['value']} must "
+                            f"be an integer. Allowed values are {feature['values']}."
                         )
 
                     value = str(data["value"])
@@ -181,13 +190,19 @@ class HCDevice:
                     # but always seem to be an integer. An integer must be provided
                     if value not in feature["values"]:
                         raise Exception(
-                            "Unable to configure appliance. " f"Value {data['value']} is not a valid value. " f"Allowed values are {feature['values']}. "
+                            "Unable to configure appliance. "
+                            f"Value {data['value']} is not a valid value. "
+                            f"Allowed values are {feature['values']}. "
                         )
 
                 if "min" in feature:
                     min = int(feature["min"])
                     max = int(feature["max"])
-                    if isinstance(data["value"], int) is False or data["value"] < min or data["value"] > max:
+                    if (
+                        isinstance(data["value"], int) is False
+                        or data["value"] < min
+                        or data["value"] > max
+                    ):
                         raise Exception(
                             "Unable to configure appliance. "
                             f"Value {data['value']} is not a valid value. "
@@ -205,7 +220,7 @@ class HCDevice:
         try:
             return self.handle_message(buf)
         except Exception as e:
-            logger.critical(f"error handling msg {e}, {buf}, {traceback.format_exc()}")
+            self.print("error handling msg", e, buf, traceback.format_exc())
             return None
 
     # reply to a POST or GET message with new data
@@ -230,7 +245,7 @@ class HCDevice:
                 if service in self.services.keys():
                     version = self.services[service]["version"]
                 else:
-                    logger.error("Service not known")
+                    self.print("ERROR service not known")
 
         msg = {
             "sID": self.session_id,
@@ -255,10 +270,11 @@ class HCDevice:
             msg["data"] = data
 
         try:
-            logger.debug(f"TX: {msg}")
+            if self.debug:
+                self.print(f"TX: {msg}")
             self.ws.send(msg)
         except Exception as e:
-            logger.critical(f"{self.name}, Failed to send, {e}, {msg}, {traceback.format_exc()}")
+            print(self.name, "Failed to send", e, msg, traceback.format_exc())
         self.tx_msg_id += 1
 
     def reconnect(self):
@@ -267,13 +283,11 @@ class HCDevice:
 
         # ask the device which services it supports
         # registered devices gets pushed down too hence the loop
-        # changed: skip error 404 on reconnect
-        if not self.services_initialized:
-            self.get("/ci/services")
-            while True:
-                time.sleep(1)
-                if self.services_initialized:
-                    break
+        self.get("/ci/services")
+        while True:
+            time.sleep(1)
+            if self.services_initialized:
+                break
 
         # We override the version based on the registered services received above
 
@@ -282,53 +296,43 @@ class HCDevice:
         # they send a response, not sure how to interpet it
         self.token = base64url_encode(get_random_bytes(32)).decode("UTF-8")
         self.token = re.sub(r"=", "", self.token)
+        self.get("/ci/authentication", version=2, data={"nonce": self.token})
 
-        # changed: ERROR: dishwasher Message Error: 404 /ci/authentication
-        # self.get("/ci/authentication", version=2, data={"nonce": self.token})
-
-        # changed: ERROR: dishwasher Message Error: 404 /ci/info
-        # self.get("/ci/info")  # clothes washer
-
-        # self.get("/ci/registeredDevices")
+        self.get("/ci/info")  # clothes washer
         self.get("/iz/info")  # dish washer
 
         # Retrieves registered clients like phone/hcpy itself
-        # tzInfo all returns empty?
+        # self.get("/ci/registeredDevices")
 
-        # changed: dishwasher Message Error: 404 /ci/tzInfo
+        # tzInfo all returns empty?
         # self.get("/ci/tzInfo")
 
         # We need to send deviceReady for some devices or /ni/ will come back as 403 unauth
         self.get("/ei/deviceReady", version=2, action="NOTIFY")
         self.get("/ni/info")
-        self.get("/ni/config", data={"interfaceID": 0})
+        # self.get("/ni/config", data={"interfaceID": 0})
 
+        # self.get("/ro/allDescriptionChanges")
         self.get("/ro/allMandatoryValues")
-
-        # changed: ERROR: dishwasher Message Error: 400 /ro/values
-        # self.get("/ro/values")
-
+        self.get("/ro/values")
         self.get("/ro/allDescriptionChanges")
 
     def handle_message(self, buf):
         msg = json.loads(buf)
-        logger.debug(f"RX: {msg}")
+        if self.debug:
+            self.print("RX:", msg)
         sys.stdout.flush()
 
         resource = msg["resource"]
         action = msg["action"]
 
-        logger.debug(f"Handle message resource: {action} {resource}")
-
         values = {}
 
         if "code" in msg:
-            # values = {
-            #     "error": msg["code"],
-            #     "resource": msg.get("resource", ""),
-            # }
-            logger.error(f"Message Error: {msg['code']}, {msg.get('resource', '')}")
-
+            values = {
+                "error": msg["code"],
+                "resource": msg.get("resource", ""),
+            }
         elif action == "POST":
             if resource == "/ei/initialValues":
                 # this is the first message they send to us and
@@ -347,14 +351,13 @@ class HCDevice:
 
                 threading.Thread(target=self.reconnect).start()
             else:
-                logger.error(f"Unknown resource {resource}")
+                self.print("Unknown resource", resource, file=sys.stderr)
 
         elif action == "RESPONSE" or action == "NOTIFY":
             if resource == "/iz/info" or resource == "/ci/info":
                 if "data" in msg and len(msg["data"]) > 0:
                     # Return Device Information such as Serial Number, SW Versions, MAC Address
                     values = msg["data"][0]
-                    values["wslink"] = resource
 
             elif resource == "/ro/descriptionChange" or resource == "/ro/allDescriptionChanges":
                 if "data" in msg and len(msg["data"]) > 0:
@@ -365,7 +368,7 @@ class HCDevice:
                                 if "access" in change:
                                     access = change["access"]
                                     self.features[uid]["access"] = access
-                                    logger.debug(f"Access change for {uid} to {access}")
+                                    self.print(f"Access change for {uid} to {access}")
                                 if "available" in change:
                                     self.features[uid]["available"] = change["available"]
                                 if "min" in change:
@@ -381,7 +384,6 @@ class HCDevice:
                 if "data" in msg and len(msg["data"]) > 0:
                     # Return Network Information/IP Address etc
                     values = msg["data"][0]
-                    values["wslink"] = resource
 
             elif resource == "/ni/config":
                 # Returns some data about network interfaces e.g.
@@ -391,9 +393,8 @@ class HCDevice:
             elif resource == "/ro/allMandatoryValues" or resource == "/ro/values":
                 if "data" in msg:
                     values = self.parse_values(msg["data"])
-                    values["wslink"] = resource
                 else:
-                    logger.debug(f"received {msg}")
+                    self.print(f"received {msg}")
 
             elif resource == "/ci/registeredDevices":
                 # This contains details of Phone/HCPY registered as clients to the device
@@ -416,18 +417,15 @@ class HCDevice:
                 self.services_initialized = True
 
             else:
-                logger.error(f"Unknown response or notify: {msg}")
+                self.print("Unknown response or notify:", msg)
 
         else:
-            logger.error(f"Unknown message: {msg}")
+            self.print("Unknown message", msg)
 
         # return whatever we've parsed out of it
-        # if resource:
-        #     values["resource"] = resource
         return values
 
     def run_forever(self, on_message, on_open, on_close):
-
         def _on_message(ws, message):
             values = self.handle_message(message)
             on_message(values)
@@ -441,10 +439,11 @@ class HCDevice:
             on_close(ws, code, message)
 
         def on_error(ws, message):
-            logger.debug(f"Websocket error: {message}")
+            self.print("Websocket error:", message)
 
-        self.ws.run_forever(on_message=_on_message, on_open=_on_open, on_close=_on_close, on_error=on_error)
+        self.ws.run_forever(
+            on_message=_on_message, on_open=_on_open, on_close=_on_close, on_error=on_error
+        )
 
-    # def print(self, *args):
-    #     if self.debug:
-    #         print(now(), self.name, *args)
+    def print(self, *args):
+        print(now(), self.name, *args)

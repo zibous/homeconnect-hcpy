@@ -7,7 +7,7 @@
     "ActiveProgram": 0,
     "SelectedProgram": 8195,
     "RemoteControlStartAllowed": true,
-    "520": "2024-06-28T11:22:24",
+    "520": "2024-06-29T14:29:00",
     "RemoteControlActive": true,
     "AquaStopOccured": "Off",
     "DoorState": "Closed",
@@ -70,32 +70,35 @@
         "length": 0,
         "list": []
     },
-    "lastupdate": "2024-06-28 13:22:27.964811",
+    "lastupdate": "2024-06-29 16:29:02.949077",
     "isrunning": false,
     "powermeter": {
         "StatusSNS": {
-            "Time": "2024-06-28T12:22:27",
+            "Time": "2024-06-29T15:29:02",
             "ENERGY": {
                 "TotalStartTime": "2022-09-03T13:02:25",
-                "Total": 167.861,
-                "Yesterday": 0.065,
-                "Today": 0.033,
+                "Total": 167.931,
+                "Yesterday": 0.063,
+                "Today": 0.039,
                 "Power": 4,
-                "ApparentPower": 14,
-                "ReactivePower": 13,
-                "Factor": 0.27,
-                "Voltage": 227,
-                "Current": 0.061
+                "ApparentPower": 26,
+                "ReactivePower": 26,
+                "Factor": 0.16,
+                "Voltage": 226,
+                "Current": 0.117
             }
         }
     },
-    "powerdisplay": 167.861,
+    "powerdisplay": 167.931,
     "energy_used": 0.0,
     "watermeter": {
         "id": "sensor-wasseruhr_anzeige",
-        "value": 7.648,
-        "state": "7.648 m\u00b3"
+        "value": 7.997,
+        "state": "7.997 m\u00b3"
     },
-    "watermeterdisplay": 7648.0,
-    "water_used": 0.0
+    "watermeterdisplay": 7997.0,
+    "water_used": 0.0,
+    "installed": "2022-09-06 12:00:00",
+    "operatingtime": "einem Jahr 9 Monaten 22 Tagen und 14 Stunden",
+    "ordertaps": false
 }

@@ -1,5 +1,6 @@
 arrow==1.3.0
 beautifulsoup4==4.12.3
+loguru==0.7.2
 paho_mqtt==2.1.0
 pycryptodome==3.20.0
 python_dateutil==2.8.2

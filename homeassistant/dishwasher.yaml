@@ -1,620 +1,745 @@
 device_dishwasher_pack:
-
   mqtt:
     - switch:
-      - name: "Energie"
-        unique_id: "dishwasher_powerstate"
-        icon: mdi:dishwasher
-        state_topic: "homeconnect/dishwasher/state"
-        state_off: "Off"
-        state_on: "On"
-        payload_on: '[{"uid":539,"value":2}]'
-        payload_off: '[{"uid":539,"value":1}]'
-        command_topic: "homeconnect/dishwasher/set"
-        value_template: "{{ value_json.PowerState|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-          name: "Bosch Geschirrspüler"
-          manufacturer: "BOSCH"
-          model: "SMV4HCX48E"
-          serial_number: "012090517380017161"
-          sw_version: "3.5.14.20230112143024"
-          hw_version: "2.2.0.5"
-          suggested_area: Küche
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "EcoDry"
-        unique_id: "dishwasher_ecodry"
-        icon: mdi:office-building-cog
-        state_topic: "homeconnect/dishwasher/state"
-        state_off: false
-        state_on: true
-        payload_on: '[{"uid":5134,"value":true}]'
-        payload_off: '[{"uid":5134,"value":false}]'
-        command_topic: "homeconnect/dishwasher/set"
-        value_template: "{{ value_json.EcoDry|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Kindersicherung"
-        unique_id: "dishwasher_childlock"
-        icon: mdi:tune
-        state_topic: "homeconnect/dishwasher/state"
-        state_off: false
-        state_on: true
-        payload_on: '[{"uid":524,"value":true}]'
-        payload_off: '[{"uid":524,"value":false}]'
-        command_topic: "homeconnect/dishwasher/set"
-        value_template: "{{ value_json.ChildLock|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Halbe Beladung"
-        unique_id: "dishwasher_halfload"
-        icon: mdi:office-building-cog
-        state_topic: "homeconnect/dishwasher/state"
-        state_off: false
-        state_on: true
-        payload_on: '[{"uid":5124,"value":true}]'
-        payload_off: '[{"uid":5124,"value":false}]'
-        command_topic: "homeconnect/dishwasher/set"
-        value_template: "{{ value_json.HalfLoad|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Silence On Demand"
-        unique_id: "dishwasher_silenceondemand"
-        icon: mdi:office-building-cog
-        state_topic: "homeconnect/dishwasher/state"
-        state_off: false
-        state_on: true
-        payload_on: '[{"uid":5136,"value":true}]'
-        payload_off: '[{"uid":5136,"value":false}]'
-        command_topic: "homeconnect/dishwasher/set"
-        value_template: "{{ value_json.SilenceOnDemand|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Vario Speed Plus"
-        unique_id: "dishwasher_variospeedplus"
-        icon: mdi:office-building-cog
-        state_topic: "homeconnect/dishwasher/state"
-        state_off: false
-        state_on: true
-        payload_on: '[{"uid":5127,"value":true}]'
-        payload_off: '[{"uid":5127,"value":false}]'
-        command_topic: "homeconnect/dishwasher/set"
-        value_template: "{{ value_json.VarioSpeedPlus|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Extra Trocknen"
-        unique_id: "dishwasher_extradry"
-        icon: mdi:office-building-cog
-        entity_category: config
-        state_topic: "homeconnect/dishwasher/state"
-        state_off: false
-        state_on: true
-        payload_on: '[{"uid":4356,"value":true}]'
-        payload_off: '[{"uid":4356,"value":false}]'
-        command_topic: "homeconnect/dishwasher/set"
-        value_template: "{{ value_json.ExtraDry|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
+        - name: "Eingeschaltet"
+          unique_id: "dishwasher_powerstate"
+          icon: mdi:dishwasher
+          state_topic: "homeconnect/dishwasher/state"
+          state_off: "Off"
+          state_on: "On"
+          payload_on: '[{"uid":539,"value":2}]'
+          payload_off: '[{"uid":539,"value":1}]'
+          command_topic: "homeconnect/dishwasher/set"
+          value_template: "{{ value_json.PowerState|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+            name: "Bosch Geschirrspüler"
+            manufacturer: "BOSCH"
+            model: "SMV4HCX48E"
+            serial_number: "012090517380017161"
+            sw_version: "3.5.14.20230112143024"
+            hw_version: "2.2.0.5"
+            suggested_area: Küche
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        # - name: "EcoDry"
+        #   unique_id: "dishwasher_ecodry"
+        #   icon: mdi:office-building-cog
+        #   state_topic: "homeconnect/dishwasher/state"
+        #   state_off: false
+        #   state_on: true
+        #   payload_on: '[{"uid":5134,"value":true}]'
+        #   payload_off: '[{"uid":5134,"value":false}]'
+        #   command_topic: "homeconnect/dishwasher/set"
+        #   value_template: "{{ value_json.EcoDry|default('unavailable') }}"
+        #   device:
+        #     identifiers: "BOSCH-SMV4HCX48E-24"
+        #   availability:
+        #     - topic: "homeconnect/LWT"
+        #     - topic: "homeconnect/dishwasher/LWT"
+        #   availability_mode: all
+
+        # - name: "Kindersicherung"
+        #   unique_id: "dishwasher_childlock"
+        #   icon: mdi:tune
+        #   state_topic: "homeconnect/dishwasher/state"
+        #   state_off: false
+        #   state_on: true
+        #   payload_on: '[{"uid":524,"value":true}]'
+        #   payload_off: '[{"uid":524,"value":false}]'
+        #   command_topic: "homeconnect/dishwasher/set"
+        #   value_template: "{{ value_json.ChildLock|default('unavailable') }}"
+        #   device:
+        #     identifiers: "BOSCH-SMV4HCX48E-24"
+        #   availability:
+        #     - topic: "homeconnect/LWT"
+        #     - topic: "homeconnect/dishwasher/LWT"
+        #   availability_mode: all
+
+        # - name: "Halbe Beladung"
+        #   unique_id: "dishwasher_halfload"
+        #   icon: mdi:office-building-cog
+        #   state_topic: "homeconnect/dishwasher/state"
+        #   state_off: false
+        #   state_on: true
+        #   payload_on: '[{"uid":5124,"value":true}]'
+        #   payload_off: '[{"uid":5124,"value":false}]'
+        #   command_topic: "homeconnect/dishwasher/set"
+        #   value_template: "{{ value_json.HalfLoad|default('unavailable') }}"
+        #   device:
+        #     identifiers: "BOSCH-SMV4HCX48E-24"
+        #   availability:
+        #     - topic: "homeconnect/LWT"
+        #     - topic: "homeconnect/dishwasher/LWT"
+        #   availability_mode: all
+
+        # - name: "Silence On Demand"
+        #   unique_id: "dishwasher_silenceondemand"
+        #   icon: mdi:office-building-cog
+        #   state_topic: "homeconnect/dishwasher/state"
+        #   state_off: false
+        #   state_on: true
+        #   payload_on: '[{"uid":5136,"value":true}]'
+        #   payload_off: '[{"uid":5136,"value":false}]'
+        #   command_topic: "homeconnect/dishwasher/set"
+        #   value_template: "{{ value_json.SilenceOnDemand|default('unavailable') }}"
+        #   device:
+        #     identifiers: "BOSCH-SMV4HCX48E-24"
+        #   availability:
+        #     - topic: "homeconnect/LWT"
+        #     - topic: "homeconnect/dishwasher/LWT"
+        #   availability_mode: all
+
+        # - name: "Vario Speed Plus"
+        #   unique_id: "dishwasher_variospeedplus"
+        #   icon: mdi:office-building-cog
+        #   state_topic: "homeconnect/dishwasher/state"
+        #   state_off: false
+        #   state_on: true
+        #   payload_on: '[{"uid":5127,"value":true}]'
+        #   payload_off: '[{"uid":5127,"value":false}]'
+        #   command_topic: "homeconnect/dishwasher/set"
+        #   value_template: "{{ value_json.VarioSpeedPlus|default('unavailable') }}"
+        #   device:
+        #     identifiers: "BOSCH-SMV4HCX48E-24"
+        #   availability:
+        #     - topic: "homeconnect/LWT"
+        #     - topic: "homeconnect/dishwasher/LWT"
+        #   availability_mode: all
+
+        - name: "Extra Trocknen"
+          unique_id: "dishwasher_extradry"
+          icon: mdi:office-building-cog
+          entity_category: config
+          state_topic: "homeconnect/dishwasher/state"
+          state_off: false
+          state_on: true
+          payload_on: '[{"uid":4356,"value":true}]'
+          payload_off: '[{"uid":4356,"value":false}]'
+          command_topic: "homeconnect/dishwasher/set"
+          value_template: "{{ value_json.ExtraDry|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
 
     - button:
-      - name: "Stop"
-        unique_id: "dishwasher_extradry"
-        icon: mdi:stop
-        command_topic: "homeconnect/dishwasher/set"
-        command_template: '[{"uid": 512,"value": true}]'
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/dishwasher/state"
-            value_template: "{{ 'offline' if value_json.OperationState == 'Ready' else 'online' }}"  
+        - name: "Stop"
+          unique_id: "dishwasher_extradry"
+          icon: mdi:stop
+          command_topic: "homeconnect/dishwasher/set"
+          command_template: '[{"uid": 512,"value": true}]'
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/state"
+              value_template: "{{ 'offline' if value_json.OperationState == 'Ready' else 'online' }}"
+
+    - button:
+        - name: "Refresh"
+          unique_id: "dishwasher_refresh"
+          icon: mdi:stop
+          entity_category: config
+          command_topic: "homeconnect/dishwasher/refresh"
+          command_template: '[{"uid": 512,"value": true}]'
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
 
     - number:
-      - name: "SilenceOnDemandDefaultTime"
-        unique_id: "dishwasher_silenceondemanddefaulttime"
-        icon: mdi:timer-play-outline
-        entity_category: config
-        retain: true
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.SilenceOnDemandDefaultTime|default('unavailable') / 60 }}"
-        command_topic: "homeconnect/dishwasher/set"
-        command_template: '[{"uid":4382,"value": {{ value * 60 }} }]'
-        min: 1
-        max: 30
-        step: 1
-        mode: box
-        unit_of_measurement: "min"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
+        - name: "SilenceOnDemandDefaultTime"
+          unique_id: "dishwasher_silenceondemanddefaulttime"
+          icon: mdi:timer-play-outline
+          entity_category: config
+          retain: true
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.SilenceOnDemandDefaultTime|default('unavailable') / 60 }}"
+          command_topic: "homeconnect/dishwasher/set"
+          command_template: '[{"uid":4382,"value": {{ value * 60 }} }]'
+          min: 1
+          max: 30
+          step: 1
+          mode: box
+          unit_of_measurement: "min"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
 
     - select:
-      - name: "Eco Einstellung"
-        unique_id: "dishwasher_ecoasdefault"
-        icon: mdi:cog
-        entity_category: config
-        retain: true
-        command_topic: "homeconnect/dishwasher/set"
-        command_template: >
-          {% if value == "LastProgram" %} 
-            [{"uid":4363,"value":0}]
-          {% elif value == "EcoAsDefault" %} 
-            [{"uid":4363,"value":1}]
-          {% endif %}
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.EcoAsDefault|default('unavailable') }}"
-        options:
-          - "LastProgram"
-          - "EcoAsDefault"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      # - name: "Trocken Assistenz"
-      #   unique_id: "dishwasher_dryingassistantallprograms"
-      #   icon: mdi:cog
-      #   entity_category: config
-      #   retain: true
-      #   command_topic: "homeconnect/dishwasher/set"
-      #   command_template: >
-      #     {% if value == "Off" %} 
-      #       [{"uid":4381,"value":0}]
-      #     {% elif value == "AllPrograms" %} 
-      #       [{"uid":4381,"value":1}]
-      #     {% elif value == "EcoAsDefault" %} 
-      #       [{"uid":4381,"value":2}]
-      #     {% endif %}
-      #   state_topic: "homeconnect/dishwasher/state"
-      #   value_template: "{{ value_json.DryingAssistantAllPrograms|default('unavailable') }}"
-      #   options:
-      #     - "Off"
-      #     - "AllPrograms"
-      #     - "EcoAsDefault"
-      #   device:
-      #     identifiers: "BOSCH-SMV4HCX48E-24"
-      #   availability:
-      #     - topic: "homeconnect/LWT"
-      #     - topic: "homeconnect/dishwasher/LWT"
-      #   availability_mode: all
-      
-      - name: "Klarspülen"
-        unique_id: "dishwasher_rinseaid"
-        icon: mdi:cog
-        entity_category: config
-        retain: true
-        command_topic: "homeconnect/dishwasher/set"
-        command_template: >
-          {% if value == "Off" %} 
-            [{"uid":4354,"value":0}]
-          {% elif value == "R01" %} 
-            [{"uid":4354,"value":1}]
-          {% elif value == "R02" %} 
-            [{"uid":4354,"value":2}]
-          {% elif value == "R03" %} 
-            [{"uid":4354,"value":3}]
-          {% elif value == "R04" %} 
-            [{"uid":4354,"value":4}]
-          {% elif value == "R05" %} 
-            [{"uid":4354,"value":5}]
-          {% elif value == "R06" %} 
-            [{"uid":4354,"value":6}]
-          {% endif %}
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.RinseAid|default('unavailable') }}"
-        options:
-          - "Off"
-          - "R01"
-          - "R02"
-          - "R03"
-          - "R04"
-          - "R05"
-          - "R06"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Aquasensor"
-        unique_id: "dishwasher_sensitivityturbidity"
-        icon: mdi:cog
-        entity_category: config
-        retain: true
-        command_topic: "homeconnect/dishwasher/set"
-        command_template: >
-          {% if value == "Standard" %} 
-            [{"uid":4355,"value":0}]
-          {% elif value == "Sensitive" %} 
-            [{"uid":4355,"value":1}]
-          {% elif value == "VerySensitive" %} 
-            [{"uid":4355,"value":2}]
-          {% endif %}
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.SensitivityTurbidity|default('unavailable') }}"
-        options:
-          - "Standard"
-          - "Sensitive"
-          - "VerySensitive"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      # 0 - 6   weich 0 - 1,1    H00
-      # 7 - 8   weich 1,2 - 1,4  H01
-      # 9 - 10  mittel 1,5 - 1,8 H02
-      # 11 - 12 mittel 1,9 - 2,1 H03
-      # 13 - 16 mittel 2,2 - 2,9 H04
-      # 17 - 21 hart 3,0 - 3,7   H05
-      # 22 - 30 hart 3,8 - 5,4   H06
-      # 31 - 50 hart 5,5 - 8,9   H07
+        - name: "Eco Einstellung"
+          unique_id: "dishwasher_ecoasdefault"
+          icon: mdi:cog
+          entity_category: config
+          retain: true
+          command_topic: "homeconnect/dishwasher/set"
+          command_template: >
+            {% if value == "LastProgram" %}
+              [{"uid":4363,"value":0}]
+            {% elif value == "EcoAsDefault" %}
+              [{"uid":4363,"value":1}]
+            {% endif %}
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.EcoAsDefault|default('unavailable') }}"
+          options:
+            - "LastProgram"
+            - "EcoAsDefault"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
 
-      - name: "Wasserhärte"
-        unique_id: "dishwasher_waterhardness"
-        icon: mdi:cog
-        entity_category: config
-        retain: true
-        command_topic: "homeconnect/dishwasher/set"
-        command_template: >
-          {% if value == "H00" %} 
-            [{"uid":4367,"value":0}]
-          {% elif value == "H01" %} 
-            [{"uid":4367,"value":1}]
-          {% elif value == "H02" %} 
-            [{"uid":4367,"value":2}]
-          {% elif value == "H03" %} 
-            [{"uid":4367,"value":3}]
-          {% elif value == "H04" %} 
-            [{"uid":4367,"value":4}]
-          {% elif value == "H05" %} 
-            [{"uid":4367,"value":5}]
-          {% elif value == "H06" %} 
-            [{"uid":4367,"value":6}]
-          {% elif value == "H07" %} 
-            [{"uid":4367,"value":7}]
-          {% endif %}
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.WaterHardness|default('unavailable') }}"
-        options:
-          - "H00"
-          - "H01 "
-          - "H02"
-          - "H03"
-          - "H04"
-          - "H05"
-          - "H06"
-          - "H07"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-  
+        # - name: "Trocken Assistenz"
+        #   unique_id: "dishwasher_dryingassistantallprograms"
+        #   icon: mdi:cog
+        #   entity_category: config
+        #   retain: true
+        #   command_topic: "homeconnect/dishwasher/set"
+        #   command_template: >
+        #     {% if value == "Off" %}
+        #       [{"uid":4381,"value":0}]
+        #     {% elif value == "AllPrograms" %}
+        #       [{"uid":4381,"value":1}]
+        #     {% elif value == "EcoAsDefault" %}
+        #       [{"uid":4381,"value":2}]
+        #     {% endif %}
+        #   state_topic: "homeconnect/dishwasher/state"
+        #   value_template: "{{ value_json.DryingAssistantAllPrograms|default('unavailable') }}"
+        #   options:
+        #     - "Off"
+        #     - "AllPrograms"
+        #     - "EcoAsDefault"
+        #   device:
+        #     identifiers: "BOSCH-SMV4HCX48E-24"
+        #   availability:
+        #     - topic: "homeconnect/LWT"
+        #     - topic: "homeconnect/dishwasher/LWT"
+        #   availability_mode: all
+
+        - name: "Klarspülen"
+          unique_id: "dishwasher_rinseaid"
+          icon: mdi:cog
+          entity_category: config
+          retain: true
+          command_topic: "homeconnect/dishwasher/set"
+          command_template: >
+            {% if value == "Off" %}
+              [{"uid":4354,"value":0}]
+            {% elif value == "R01" %}
+              [{"uid":4354,"value":1}]
+            {% elif value == "R02" %}
+              [{"uid":4354,"value":2}]
+            {% elif value == "R03" %}
+              [{"uid":4354,"value":3}]
+            {% elif value == "R04" %}
+              [{"uid":4354,"value":4}]
+            {% elif value == "R05" %}
+              [{"uid":4354,"value":5}]
+            {% elif value == "R06" %}
+              [{"uid":4354,"value":6}]
+            {% endif %}
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.RinseAid|default('unavailable') }}"
+          options:
+            - "Off"
+            - "R01"
+            - "R02"
+            - "R03"
+            - "R04"
+            - "R05"
+            - "R06"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Aquasensor"
+          unique_id: "dishwasher_sensitivityturbidity"
+          icon: mdi:cog
+          entity_category: config
+          retain: true
+          command_topic: "homeconnect/dishwasher/set"
+          command_template: >
+            {% if value == "Standard" %}
+              [{"uid":4355,"value":0}]
+            {% elif value == "Sensitive" %}
+              [{"uid":4355,"value":1}]
+            {% elif value == "VerySensitive" %}
+              [{"uid":4355,"value":2}]
+            {% endif %}
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.SensitivityTurbidity|default('unavailable') }}"
+          options:
+            - "Standard"
+            - "Sensitive"
+            - "VerySensitive"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        # 0 - 6   weich 0 - 1,1    H00
+        # 7 - 8   weich 1,2 - 1,4  H01
+        # 9 - 10  mittel 1,5 - 1,8 H02
+        # 11 - 12 mittel 1,9 - 2,1 H03
+        # 13 - 16 mittel 2,2 - 2,9 H04
+        # 17 - 21 hart 3,0 - 3,7   H05
+        # 22 - 30 hart 3,8 - 5,4   H06
+        # 31 - 50 hart 5,5 - 8,9   H07
+
+        - name: "Wasserhärte"
+          unique_id: "dishwasher_waterhardness"
+          icon: mdi:cog
+          entity_category: config
+          retain: true
+          command_topic: "homeconnect/dishwasher/set"
+          command_template: >
+            {% if value == "H00" %}
+              [{"uid":4367,"value":0}]
+            {% elif value == "H01" %}
+              [{"uid":4367,"value":1}]
+            {% elif value == "H02" %}
+              [{"uid":4367,"value":2}]
+            {% elif value == "H03" %}
+              [{"uid":4367,"value":3}]
+            {% elif value == "H04" %}
+              [{"uid":4367,"value":4}]
+            {% elif value == "H05" %}
+              [{"uid":4367,"value":5}]
+            {% elif value == "H06" %}
+              [{"uid":4367,"value":6}]
+            {% elif value == "H07" %}
+              [{"uid":4367,"value":7}]
+            {% endif %}
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.WaterHardness|default('unavailable') }}"
+          options:
+            - "H00"
+            - "H01 "
+            - "H02"
+            - "H03"
+            - "H04"
+            - "H05"
+            - "H06"
+            - "H07"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
     - binary_sensor:
-      - name: "Fronttüre"
-        unique_id: "dishwasher_door"
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.DoorState|default('unavailable') }}"
-        payload_on: "Open"
-        payload_off: "Closed"
-        device_class: door
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "RemoteControlStartAllowed"
-        unique_id: "dishwasher_remotecontrolstartallowed"
-        icon: mdi:gauge-full
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.RemoteControlStartAllowed|default('unavailable') }}"
-        payload_on: true
-        payload_off: false
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "RemoteControlActive"
-        unique_id: "dishwasher_remotecontrolactive"
-        icon: mdi:gauge-full
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.RemoteControlActive|default('unavailable') }}"
-        payload_on: true
-        payload_off: false
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Kindersicherung"
-        unique_id: "dishwasher_childlock"
-        icon: mdi:tune
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.ChildLock|default('unavailable') }}"
-        payload_on: true
-        payload_off: false
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
+        - name: "Fronttüre"
+          unique_id: "dishwasher_door"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.DoorState|default('unavailable') }}"
+          payload_on: "Open"
+          payload_off: "Closed"
+          device_class: door
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
 
-      - name: "Trocknung Eco"
-        unique_id: "dishwasher_ecodry"
-        icon: mdi:office-building-cog
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.EcoDry|default('unavailable') }}"
-        payload_on: true
-        payload_off: false
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Trockung Eco ein"
-        unique_id: "dishwasher_ecodryactive"
-        icon: mdi:office-building-cog
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.EcoDryActive|default('unavailable') }}"
-        payload_on: true
-        payload_off: false
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
+        - name: "Fernsteuerung erlaubt"
+          unique_id: "dishwasher_remotecontrolstartallowed"
+          icon: mdi:gauge-full
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.RemoteControlStartAllowed|default('unavailable') }}"
+          payload_on: true
+          payload_off: false
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
 
-      - name: "Halbe Ladung"
-        unique_id: "dishwasher_halfload"
-        icon: mdi:office-building-cog
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.HalfLoad|default('unavailable') }}"
-        payload_on: true
-        payload_off: false
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
+        - name: "Fernsteuerung ein"
+          unique_id: "dishwasher_remotecontrolactive"
+          icon: mdi:gauge-full
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.RemoteControlActive|default('unavailable') }}"
+          payload_on: true
+          payload_off: false
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
 
-      - name: "Energie Status"
-        unique_id: "dishwasher_powerstate"
-        icon: mdi:dishwasher
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.PowerState|default('unavailable') }}"
-        payload_on: "On"
-        payload_off: "Off"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Speed On Demand"
-        unique_id: "dishwasher_speedondemand"
-        icon: mdi:gauge-full
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.SpeedOnDemand|default('unavailable') }}"
-        payload_on: true
-        payload_off: false
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
+        - name: "Spültabs bestellen"
+          unique_id: "dishwasher_ordertaps"
+          icon: mdi:gauge-full
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.ordertaps|default('unavailable') }}"
+          payload_on: true
+          payload_off: false
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
 
-      - name: "Silence On Demand"
-        unique_id: "dishwasher_silenceondemand"
-        icon: mdi:office-building-cog
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.SilenceOnDemand|default('unavailable') }}"
-        payload_on: true
-        payload_off: false
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
+        - name: "Software Update"
+          unique_id: "dishwasher_SoftwareUpdateAvailable"
+          icon: mdi:gauge-full
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.SoftwareUpdateAvailable|default('unavailable') }}"
+          payload_on: "On"
+          payload_off: "Off"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        # - name: "Kindersicherung"
+        #   unique_id: "dishwasher_childlock"
+        #   icon: mdi:tune
+        #   state_topic: "homeconnect/dishwasher/state"
+        #   value_template: "{{ value_json.ChildLock|default('unavailable') }}"
+        #   payload_on: true
+        #   payload_off: false
+        #   device:
+        #     identifiers: "BOSCH-SMV4HCX48E-24"
+        #   availability:
+        #     - topic: "homeconnect/LWT"
+        #     - topic: "homeconnect/dishwasher/LWT"
+        #   availability_mode: all
+
+        # - name: "Trocknung Eco"
+        #   unique_id: "dishwasher_ecodry"
+        #   icon: mdi:office-building-cog
+        #   state_topic: "homeconnect/dishwasher/state"
+        #   value_template: "{{ value_json.EcoDry|default('unavailable') }}"
+        #   payload_on: true
+        #   payload_off: false
+        #   device:
+        #     identifiers: "BOSCH-SMV4HCX48E-24"
+        #   availability:
+        #     - topic: "homeconnect/LWT"
+        #     - topic: "homeconnect/dishwasher/LWT"
+        #   availability_mode: all
+
+        # - name: "Trockung Eco ein"
+        #   unique_id: "dishwasher_ecodryactive"
+        #   icon: mdi:office-building-cog
+        #   state_topic: "homeconnect/dishwasher/state"
+        #   value_template: "{{ value_json.EcoDryActive|default('unavailable') }}"
+        #   payload_on: true
+        #   payload_off: false
+        #   device:
+        #     identifiers: "BOSCH-SMV4HCX48E-24"
+        #   availability:
+        #     - topic: "homeconnect/LWT"
+        #     - topic: "homeconnect/dishwasher/LWT"
+        #   availability_mode: all
+
+        - name: "Halbe Ladung"
+          unique_id: "dishwasher_halfload"
+          icon: mdi:office-building-cog
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.HalfLoad|default('unavailable') }}"
+          payload_on: true
+          payload_off: false
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Spülzyklus schneller"
+          unique_id: "dishwasher_speedondemand"
+          icon: mdi:gauge-full
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.SpeedOnDemand|default('unavailable') }}"
+          payload_on: true
+          payload_off: false
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Lautlos Modus"
+          unique_id: "dishwasher_silenceondemand"
+          icon: mdi:office-building-cog
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.SilenceOnDemand|default('unavailable') }}"
+          payload_on: true
+          payload_off: false
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
 
     - sensor:
-      - name: "Program Mode"
-        unique_id: "dishwasher_activeprogram"
-        icon: mdi:dishwasher
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: >
-          {% set program = '{ "8195":"Auto2", "8196":"Eco50", "8197":"Glas40", "8192":"Intensiv70", "8213":"Kurz60", "8215":"MachineCare", "8202":"NightWash", "8200":"PreRinse", "8199":"Quick45"}'|from_json %}
-          {{ program[value_json.ActiveProgram|string]|default("None") }}
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Spülprogramm"
-        unique_id: "dishwasher_selectedprogram"
-        icon: mdi:dishwasher
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: >
-          {% set program = '{ "8195":"Auto2", "8196":"Eco50", "8197":"Glas40", "8192":"Intensiv70", "8213":"Kurz60", "8215":"MachineCare", "8202":"NightWash", "8200":"PreRinse", "8199":"Quick45"}'|from_json %}
-          {{ program[value_json.SelectedProgram|string]|default("None") }}
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Spülprogramm Phase"
-        unique_id: "dishwasher_programphase"
-        icon: mdi:gauge-full
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.ProgramPhase|float(0)}}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Betriebstatus"
-        unique_id: "dishwasher_operationstate"
-        icon: mdi:gauge-full
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.OperationState|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Spülprogramm Ablauf"
-        unique_id: "dishwasher_programprogress"
-        icon: mdi:percent
-        unit_of_measurement: "%"
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.ProgramProgress|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Spülprogramm Restzeit"
-        unique_id: "dishwasher_remainingprogramtime"
-        icon: mdi:progress-clock
-        unit_of_measurement: s
-        device_class: duration
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.RemainingProgramTime|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "StartInRelative"
-        unique_id: "dishwasher_startinrelative"
-        icon: mdi:timer-play-outline
-        unit_of_measurement: s
-        device_class: duration
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.StartInRelative|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "SilenceOnDemandRemainingTime"
-        unique_id: "dishwasher_silenceondemandremainingtime"
-        icon: mdi:timer-play-outline
-        unit_of_measurement: s
-        device_class: duration
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.SilenceOnDemandRemainingTime|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all
-      
-      - name: "Energieprognose"
-        unique_id: "dishwasher_energyforecast"
-        icon: mdi:percent
-        unit_of_measurement: "%"
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.EnergyForecast|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all  
-      
-      - name: "Wasserprognose"
-        unique_id: "dishwasher_waterforecast"
-        icon: mdi:percent
-        unit_of_measurement: "%"
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.WaterForecast|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all    
+        - name: "Program Mode"
+          unique_id: "dishwasher_activeprogram"
+          icon: mdi:dishwasher
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: >
+            {% set program = '{ "8195":"Auto2", "8196":"Eco50", "8197":"Glas40", "8192":"Intensiv70", "8213":"Kurz60", "8215":"MachineCare", "8202":"NightWash", "8200":"PreRinse", "8199":"Quick45"}'|from_json %}
+            {{ program[value_json.ActiveProgram|string]|default("None") }}
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
 
-      - name: "Akualisiert am"
-        unique_id: "dishwasher_lastupdate"        
-        state_topic: "homeconnect/dishwasher/state"
-        value_template: "{{ value_json.lastupdate|default('unavailable') }}"
-        device:
-          identifiers: "BOSCH-SMV4HCX48E-24"
-        availability:
-          - topic: "homeconnect/LWT"
-          - topic: "homeconnect/dishwasher/LWT"
-        availability_mode: all      
-        
+        - name: "Spülprogramm"
+          unique_id: "dishwasher_selectedprogram"
+          icon: mdi:dishwasher
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: >
+            {% set program = '{ "8195":"Auto2", "8196":"Eco50", "8197":"Glas40", "8192":"Intensiv70", "8213":"Kurz60", "8215":"MachineCare", "8202":"NightWash", "8200":"PreRinse", "8199":"Quick45"}'|from_json %}
+            {{ program[value_json.SelectedProgram|string]|default("None") }}
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Spülprogramm Phase"
+          unique_id: "dishwasher_programphase"
+          icon: mdi:gauge-full
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.ProgramPhase|float(0)}}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Betriebstatus"
+          unique_id: "dishwasher_operationstate"
+          icon: mdi:gauge-full
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.OperationState|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Spülprogramm Ablauf"
+          unique_id: "dishwasher_programprogress"
+          icon: mdi:percent
+          unit_of_measurement: "%"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.ProgramProgress|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Spülprogramm Restzeit"
+          unique_id: "dishwasher_remainingprogramtime"
+          icon: mdi:progress-clock
+          unit_of_measurement: s
+          device_class: duration
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.RemainingProgramTime|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Spülprogramm verzögert"
+          unique_id: "dishwasher_startinrelative"
+          icon: mdi:timer-play-outline
+          unit_of_measurement: s
+          device_class: duration
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.StartInRelative|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Lautlos Modus Zeit"
+          unique_id: "dishwasher_silenceondemandremainingtime"
+          icon: mdi:timer-play-outline
+          unit_of_measurement: s
+          device_class: duration
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.SilenceOnDemandRemainingTime|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Energieprognose"
+          unique_id: "dishwasher_energyforecast"
+          icon: mdi:percent
+          unit_of_measurement: "%"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.EnergyForecast|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Energieverbrauch"
+          unique_id: "dishwasher_energyconsumtion"
+          icon: mdi:power
+          unit_of_measurement: "kWh"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.energy_used|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Wasserprognose"
+          unique_id: "dishwasher_waterforecast"
+          icon: mdi:percent
+          unit_of_measurement: "%"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.WaterForecast|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Wasserverbrauch"
+          unique_id: "dishwasher_waterconsumtion"
+          icon: mdi:water
+          unit_of_measurement: "L"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.water_used|default('unavailable') }}"
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Session total"
+          unique_id: "dishwasher_Started"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.Started|default('unavailable') }}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Session gestartet"
+          unique_id: "dishwasher_sessionstart"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.sessionstart|default('unavailable') }}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Session beendet"
+          unique_id: "dishwasher_sessionsend"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.sessionsend|default('unavailable') }}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Session Status"
+          unique_id: "dishwasher_taskstate"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.taskstate|default('unavailable') }}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Akualisiert am"
+          unique_id: "dishwasher_lastupdate"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.lastupdate|default('unavailable') }}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Installiert am"
+          unique_id: "dishwasher_installed"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.installed|default('unavailable') }}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Betrieb seit"
+          unique_id: "dishwasher_operatingtime"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{ value_json.operatingtime|default('unavailable') }}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/LWT"
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all

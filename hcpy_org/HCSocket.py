@@ -14,8 +14,6 @@ from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Random import get_random_bytes
 
-## all for logging
-from loguru import logger
 
 # Convience to compute an HMAC on a message
 def hmac(key, msg):
@@ -39,14 +37,13 @@ sslpsk.sslpsk._sslobj = _sslobj
 
 
 class HCSocket:
-    def __init__(self, host, psk64, iv64=None, domain_suffix="", debug=False):
+    def __init__(self, host, psk64, iv64=None, domain_suffix=""):
         self.host = host
         if domain_suffix:
             self.host = f"{host}.{domain_suffix}"
 
         self.psk = base64url(psk64 + "===")
-        self.debug = debug
-        self.traceEnabled = False
+        self.debug = False
 
         if iv64:
             # an HTTP self-encrypted socket
@@ -82,10 +79,10 @@ class HCSocket:
 
     def decrypt(self, buf):
         if len(buf) < 32:
-            logger.debug(f"Short message: {buf.hex()}")
+            print("Short message?", buf.hex(), file=sys.stderr)
             return None
         if len(buf) % 16 != 0:
-            logger.warning(f"Unaligned message? probably bad, {buf.hex()}")
+            print("Unaligned message? probably bad", buf.hex(), file=sys.stderr)
 
         # split the message into the encrypted message and the first 16-bytes of the HMAC
         enc_msg = buf[0:-16]
@@ -95,7 +92,7 @@ class HCSocket:
         our_hmac = self.hmac_msg(b"\x43" + self.last_rx_hmac, enc_msg)
 
         if their_hmac != our_hmac:
-            logger.warning(f"HMAC failure {their_hmac.hex()}, {our_hmac.hex()}")
+            print("HMAC failure", their_hmac.hex(), our_hmac.hex(), file=sys.stderr)
             return None
 
         self.last_rx_hmac = their_hmac
@@ -106,7 +103,7 @@ class HCSocket:
         # check for padding and trim it off the end
         pad_len = msg[-1]
         if len(msg) < pad_len:
-            logger.error(f"padding error {msg.hex()}")
+            print("padding error?", msg.hex())
             return None
 
         return msg[0:-pad_len]
@@ -147,7 +144,7 @@ class HCSocket:
                 psk=self.psk,
             )
 
-        logger.info(f"Websocket reconnect {self.uri}")
+        print(now(), "CON:", self.uri)
         self.ws = websocket.WebSocket()
         self.ws.connect(self.uri, socket=sock, origin="")
 
@@ -155,7 +152,7 @@ class HCSocket:
         buf = json.dumps(msg, separators=(",", ":"))
         # swap " for '
         buf = re.sub("'", '"', buf)
-        logger.debug(f"TX: {buf}")
+        self.dprint("TX:", buf)
         if self.http:
             self.ws.send_bytes(self.encrypt(buf))
         else:
@@ -171,7 +168,7 @@ class HCSocket:
         if buf is None:
             return None
 
-        logger.debug(f"RX: {buf}")
+        self.dprint("RX:", buf)
         return buf
 
     def run_forever(self, on_message, on_open, on_close, on_error):
@@ -188,30 +185,38 @@ class HCSocket:
             )
 
         def _on_open(ws):
-            logger.debug("on connect")
+            self.dprint("on connect")
             on_open(ws)
 
         def _on_close(ws, close_status_code, close_msg):
-            logger.debug(f"close: {close_msg}")
+            self.dprint(f"close: {close_msg}")
             on_close(ws, close_status_code, close_msg)
 
         def _on_message(ws, message):
             if self.http:
                 message = self.decrypt(message)
-            logger.debug(f"RX: {message}")
+            self.dprint("RX:", message)
             on_message(ws, message)
 
         def _on_error(ws, error):
-            logger.error(f"error {error}")
+            self.dprint(f"error {error}")
             on_error(ws, error)
 
-        logger.info(f"Websocket connect {self.uri}")
-
-        if self.traceEnabled:
-            websocket.enableTrace(True)
-
-        self.ws = websocket.WebSocketApp(self.uri, socket=sock, on_open=_on_open, on_message=_on_message, on_close=_on_close, on_error=_on_error)
+        print(now(), "CON:", self.uri)
+        self.ws = websocket.WebSocketApp(
+            self.uri,
+            socket=sock,
+            on_open=_on_open,
+            on_message=_on_message,
+            on_close=_on_close,
+            on_error=_on_error,
+        )
 
         websocket.setdefaulttimeout(30)
 
         self.ws.run_forever(ping_interval=120, ping_timeout=10)
+
+    # Debug print
+    def dprint(self, *args):
+        if self.debug:
+            print(now(), *args)

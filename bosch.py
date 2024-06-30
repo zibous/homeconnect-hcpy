@@ -26,38 +26,55 @@ dirname, filename = os.path.split(os.path.abspath(__file__))
 
 __APPLICATION_NAME__ = os.path.basename(dirname)
 __author__ = "Peter Siebler"
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __license__ = "MIT"
 
-import logging
+## all for logging
+from loguru import logger
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s:%(msecs)03d | %(levelname)s %(module)s line %(lineno)d: %(message)s ",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-logger = logging.getLogger(__name__)
+logger = logger.patch(lambda record: record.update(name=record["file"].name))
+
+min_level = "INFO"
+
+
+def setlogLevel(min_level: str = min_level):
+    """set the log level for the current logger:
+    TRACE :   5
+    DEBUG :  10
+    INFO:    20
+    SUCCESS:  25
+    WARNING:  30
+    ERROR:    40
+    CRITICAL: 50
+    """
+
+    def my_filter(record):
+        return record["level"].no >= logger.level(min_level).no
+
+    logger.remove()
+    logger.add(sys.stderr, filter=my_filter)
 
 
 class Homeconnect:
     """homeconnect applciation class"""
 
-    # app settings
-    devices_file: str
-    mqtt_host: str
-    mqtt_username: str
-    mqtt_password: str
-    mqtt_port: int
-    mqtt_prefix: str
-    mqtt_ssl: bool
+    # app default settings
+    devices_file: str = "./config/devices.json"
+    mqtt_host: str = "localhost"
+    mqtt_username: str = ""
+    mqtt_password: str = ""
+    mqtt_port: int = 1883
+    mqtt_prefix: str = "homeconnect/"
+    mqtt_ssl: bool = False
     mqtt_cafile: None
     mqtt_certfile: None
     mqtt_keyfile: None
-    mqtt_clientname: str
-    domain_suffix: str
-    debug: bool
+    mqtt_clientname: str = __APPLICATION_NAME__
+    domain_suffix: str = ""
+    debug: bool = False
     locale: str = "de"
-    LOGLEVEL: str = "NONE"
+    tzinfo: str = "Europe/Vaduz"
+    LOGLEVEL: str = "WARNING"
 
     # device dict
     dev = {}
@@ -84,26 +101,39 @@ class Homeconnect:
         and store the items to the class object attributes (device settings, mqttbrocker...)
         """
         try:
-            with open(self.config_file, "r", encoding="utf8") as f:
-                param = json.load(f)
-            for key, value in param.items():
-                setattr(self, key, value)
+            if not ((sys.version_info.major == 3 and sys.version_info.minor == 11) and sys.version_info.micro == 9):
+                logger.warning(f"Application needs Python 3.11.9")
+
+            if os.path.isfile(self.config_file):
+                with open(self.config_file, "r", encoding="utf8") as f:
+                    param = json.load(f)
+                for key, value in param.items():
+                    setattr(self, key, value)
+                setlogLevel(self.LOGLEVEL)
+                logger.debug(f"Application config file{self.config_file} found.")
+            else:
+                logger.critical(f"Application config file {self.config_file} not found.")
+                sys.exit(f"Missing config file {self.config_file}")
+            if os.path.isfile(self.devices_file):
+                logger.debug(f"Devices file {self.devices_file} found.")
+            else:
+                logger.critical(f"Devices file {self.devices_file} not found, run hc-login first.")
+                sys.exit(f"Missing Devices File  {self.devices_file}")
+
             # be shure that we have a unique client
             _id = base64url_encode(get_random_bytes(4)).decode("UTF-8")
             self.mqtt_clientname = f"bosch-{_id}"
-            # self.mqtt_clientname = f'python-mqtt-{random.randint(0, 1000)}'
-            logger.setLevel(level=self.LOGLEVEL)
-            logger.debug(json.dumps(self.__dict__, ensure_ascii=True, indent=4))
+            logger.debug(f"Application ready to run")
             return True
+
         except Exception as e:
             raise e
         finally:
             return False
 
-    def timeDelta(self, strDate: str = None, times: str = "h") -> dict:
+    def timeDelta(self, strDate: str = None, shortmode: bool = True, times: str = "h") -> dict:
         """get the time delta for the given date to now"""
         try:
-            a = arrow.get(parse(strDate))
             list_times = {
                 "y": ["year", "month", "day", "hour"],
                 "q": ["quarter", "month", "week", "day"],
@@ -114,7 +144,7 @@ class Homeconnect:
                 "min": ["minute", "second"],
             }
             _granularity = list_times.get(times, "auto")
-            return a.humanize(only_distance=True, granularity=_granularity, locale=self.locale)
+            return arrow.get(strDate, tzinfo=self.tzinfo).humanize(only_distance=shortmode, granularity=_granularity, locale=self.locale)
         except Exception as e:
             raise e
 
@@ -161,13 +191,27 @@ class Homeconnect:
         """simple callback state payload from client add additional data (energy, water)"""
         try:
             if topic and states:
+
+                logger.debug(f"Resource - Websocket Link: {states.get('wslink', 'unkown')}")
+
                 states["lastupdate"] = now()
                 states["Name"] = name
+                # states["remainingseconds"] = 0
+
+                _addOns = self.addons.get(name, None)
+                if _addOns.get("installed", None):
+                    states["installed"] = _addOns.get("installed", None)
+                    states["operatingtime"] = self.timeDelta(strDate=states["installed"], shortmode=False, times="y")
 
                 # get the running state from the device
                 if states.__contains__("PowerState") and states.__contains__("ProgramProgress"):
+
                     logger.debug(f"{name} Calc the water and energy usage")
                     states["isrunning"] = False
+
+                    if states.__contains__("RemainingProgramTime"):
+                        _value = states.get("RemainingProgramTime", 0)
+                        states["remainingseconds"] = "%d:%02d" % (_value / 60 / 60, (_value / 60) % 60)
 
                     # get the current status for the dishwasher
                     _dws = states.get("PowerState", "Off") == "On" and int(states.get("ProgramProgress", 1)) > 0
@@ -176,13 +220,18 @@ class Homeconnect:
                     if self.status(_dws) == 1:
                         logger.debug(f"{name} is now starting")
                         states["sessionstart"] = now()
+                        states["sessiontime"] = ""
                         states["isrunning"] = True
 
                     if self.status(_dws) == 2:
                         logger.debug(f"{name} is now ending")
                         states["sessionsend"] = now()
                         states["isrunning"] = False
-                    _addOns = self.addons.get(name, None)
+                        states["sessiontime"] = self.timeDelta(strDate=states["sessionsend"], shortmode=False, times="min")
+
+                    _tasktext = ["idle", "started", "ending"]
+                    states["taskstate"] = _tasktext[self.status(_dws)]
+
                     if _addOns:
                         _powermeter = _addOns.get("powermeter", None)
                         if _powermeter:
@@ -244,10 +293,6 @@ class Homeconnect:
                                     states["watermeterdisplay"] = _liter
                                     states["water_used"] = float(0.00)
 
-                    if _addOns.get("installed", None):
-                        states["installed"] = _addOns.get("installed", None)
-                        states["operatingtime"] = self.timeDelta(strDate=states["installed"], times="y")
-
                     if _addOns.get("taps", None) and states.get("Started", 0):
                         _tabs = int(_addOns.get("taps", 20))
                         _tabsmin = int(_addOns.get("taps_min", 0))
@@ -255,12 +300,12 @@ class Homeconnect:
 
                 ## publish the new state
                 payload = json.dumps(states, ensure_ascii=True)
-                logger.debug(f"{name} publish state data to {topic}")
+                logger.info(f"{name} publish state data {states.get('wslink', 'unkown')} to {topic}")
 
                 _result = client.publish(topic=f"{topic}", payload=payload, retain=True)
                 _status = _result[0]
                 if _status == 0:
-                    logger.info(f"{name} publish send {topic}")
+                    logger.debug(f"{name} publish send {topic} finished")
                 else:
                     logger.critical(f"{name} publish failed {topic}, {payload}")
 
@@ -286,6 +331,8 @@ class Homeconnect:
                     mqtt_set_topic = f"{self.mqtt_prefix}{device['name']}/set"
                     logger.debug(f"{device['name']}, set topic: {mqtt_set_topic}")
                     client.subscribe(mqtt_set_topic)
+                    mqtt_set_topic = f"{self.mqtt_prefix}{device['name']}/refresh"
+                    client.subscribe(mqtt_set_topic)
                     for value in device["features"]:
                         # If the device has the ActiveProgram feature it allows programs to be started
                         # and scheduled via /ro/activeProgram
@@ -306,9 +353,12 @@ class Homeconnect:
 
         def on_message(client, userdata, msg):
             """mqtt brocker on message callback"""
+
             mqtt_state = msg.payload.decode()
             mqtt_topic = msg.topic.split("/")
-            logger.debug(f"{msg.topic} received mqtt message {mqtt_state}")
+
+            logger.info(f"{msg.topic} received mqtt message {mqtt_state}")
+
             try:
                 if len(mqtt_topic) >= 2:
                     device_name = mqtt_topic[-2]
@@ -322,14 +372,23 @@ class Homeconnect:
 
                 if topic == "set":
                     resource = "/ro/values"
+
+                elif topic == "refresh":
+                    logger.info(f"Reconnect  {self.dev[device_name]}")
+                    self.dev[device_name].reconnect()
+                    return
+
                 elif topic == "activeProgram":
                     resource = "/ro/activeProgram"
                 else:
                     raise Exception(f"Payload topic {topic} is unknown.")
+
                 if self.dev[device_name].connected:
-                    self.dev[device_name].get(resource, 1, "POST", msg)
+                    if resource and msg:
+                        self.dev[device_name].get(resource, 1, "POST", msg)
                 else:
                     logger.critical(f"{device_name}, ERROR cant send message as websocket is not connected")
+
             except Exception as e:
                 logger.critical(f"{device_name} FATAL ERROR", {e})
 
@@ -371,7 +430,9 @@ class Homeconnect:
 
             """register each device as new thread, connect to the selected device"""
             for device in devices:
+
                 _name = device["name"]
+
                 if device.__contains__("addons"):
                     self.addons[_name] = device["addons"]
 
@@ -426,7 +487,7 @@ class Homeconnect:
         def on_open(ws):
             """callback client connection open, publish the last will topic for the device"""
             client.publish(topic=f"{mqtt_topic}/LWT", payload="online", retain=True)
-            logger.info(f"MQTT Last Will {device['name']} Topic={mqtt_topic}/LWT Online")
+            logger.debug(f"MQTT Last Will {device['name']} Topic={mqtt_topic}/LWT Online")
 
         def on_close(ws, code, message):
             """callback client connection open, publish the last will topic for the device"""
@@ -437,9 +498,9 @@ class Homeconnect:
             time.sleep(3)
             try:
                 """connect to the device"""
-                logger.info(f"{name} connecting to {host}")
-                ws = HCSocket(host, device["key"], device.get("iv", None), domain_suffix)
-                self.dev[name] = HCDevice(ws, device, debug)
+                logger.debug(f"{name} connecting to {host}")
+                ws = HCSocket(host=host, psk64=device["key"], iv64=device.get("iv", None), domain_suffix=domain_suffix, debug=debug)
+                self.dev[name] = HCDevice(ws=ws, device=device, debug=self.debug)
                 self.dev[name].run_forever(on_message=on_message, on_open=on_open, on_close=on_close)
 
             except Exception as e:
