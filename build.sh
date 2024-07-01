@@ -5,7 +5,7 @@ CONTAINERLABEL="homeconnect"
 DOCKER_TIMEZONE=Europe/Berlin
 
 # persistant applications dir
-APPSDATA=/dockerapps/_lab/homeconnect
+APPSDATA=/dockerapps/_lab/homeconnect-hcpy
 
 echo "Clean Python app ${DOCKERIMAGE}..."
 pyclean . --debris --verbose
@@ -23,7 +23,7 @@ docker build -t ${DOCKERIMAGE} .
 echo "Install Docker Image ${DOCKERIMAGE}..."
 docker run -it --detach  \
            --name ${CONTAINERLABEL} \
-           --volume ${APPSDATA}/config:/app/config  \
+           --volume ${PWD}/config:/app/config  \
            --env TZ=${DOCKER_TIMEZONE} \
            --restart unless-stopped \
            ${DOCKERIMAGE}

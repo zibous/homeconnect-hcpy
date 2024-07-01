@@ -26,7 +26,7 @@ dirname, filename = os.path.split(os.path.abspath(__file__))
 
 __APPLICATION_NAME__ = os.path.basename(dirname)
 __author__ = "Peter Siebler"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 __license__ = "MIT"
 
 ## all for logging
@@ -110,12 +110,12 @@ class Homeconnect:
                 for key, value in param.items():
                     setattr(self, key, value)
                 setlogLevel(self.LOGLEVEL)
-                logger.debug(f"Application config file{self.config_file} found.")
+                logger.success(f"Application config file{self.config_file} found.")
             else:
                 logger.critical(f"Application config file {self.config_file} not found.")
                 sys.exit(f"Missing config file {self.config_file}")
             if os.path.isfile(self.devices_file):
-                logger.debug(f"Devices file {self.devices_file} found.")
+                logger.success(f"Devices file {self.devices_file} found.")
             else:
                 logger.critical(f"Devices file {self.devices_file} not found, run hc-login first.")
                 sys.exit(f"Missing Devices File  {self.devices_file}")
@@ -305,6 +305,10 @@ class Homeconnect:
                         _tabsmin = int(_addOns.get("taps_min", 0))
                         states["ordertaps"] = (int(states.get("Started", 0)) % _tabs) < _tabsmin
 
+                states["hostname"] = "{}.{}".format(os.uname().nodename, __APPLICATION_NAME__)
+                states["version"] = __version__
+                states["attribution"] = "Data provided by".format(__APPLICATION_NAME__)
+
                 ## publish the new state
                 payload = json.dumps(states, ensure_ascii=True)
                 logger.info(f"{name} publish state data {states.get('wslink', 'unkown')} to {topic}")
@@ -443,7 +447,9 @@ class Homeconnect:
                 if device.__contains__("addons"):
                     self.addons[_name] = device["addons"]
 
-                _resources = device["resources"]
+                _resources = {}
+                if device.__contains__("resources"):
+                    _resources = device["resources"]
 
                 mqtt_topic = self.mqtt_prefix + _name
                 thread = Thread(target=self.client_connect, args=(client, device, mqtt_topic, self.domain_suffix, _resources, self.debug))

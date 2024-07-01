@@ -65,8 +65,8 @@ Go to your desired test directory, and:
 
 ```bash
 ⚡ user@linux: pyenv --version
-⚡ user@linux: pyenv install 3.10.14
-⚡ user@linux: pyenv virtualenv 3.10.14 apps
+⚡ user@linux: pyenv install 3.11.9
+⚡ user@linux: pyenv virtualenv 3.11.9 apps
 ⚡ user@linux: pyenv local apps
 ⚡ user@linux: git clone https://github.com/hcpy2-0/hcpy
 ⚡ user@linux: cd hcpy
