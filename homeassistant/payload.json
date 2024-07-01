@@ -7,7 +7,7 @@
     "ActiveProgram": 0,
     "SelectedProgram": 8195,
     "RemoteControlStartAllowed": true,
-    "520": "2024-06-29T14:29:00",
+    "520": "2024-07-01T09:12:37",
     "RemoteControlActive": true,
     "AquaStopOccured": "Off",
     "DoorState": "Closed",
@@ -32,7 +32,7 @@
         "length": 0,
         "list": []
     },
-    "Started": 155,
+    "Started": 156,
     "ProgramPhase": "None",
     "SilenceOnDemandRemainingTime": 0,
     "RinseAid": "Off",
@@ -70,35 +70,41 @@
         "length": 0,
         "list": []
     },
-    "lastupdate": "2024-06-29 16:29:02.949077",
+    "wslink": "/ro/allMandatoryValues",
+    "lastupdate": "2024-07-01 11:12:38.396305",
+    "installed": "2022-09-06 12:00:00",
+    "operatingtime": "vor einem Jahr 9 Monaten 24 Tagen und 11 Stunden",
     "isrunning": false,
+    "remainingseconds": "2:20",
+    "taskstate": "idle",
     "powermeter": {
         "StatusSNS": {
-            "Time": "2024-06-29T15:29:02",
+            "Time": "2024-07-01T10:12:38",
             "ENERGY": {
                 "TotalStartTime": "2022-09-03T13:02:25",
-                "Total": 167.931,
-                "Yesterday": 0.063,
-                "Today": 0.039,
+                "Total": 168.743,
+                "Yesterday": 0.061,
+                "Today": 0.025,
                 "Power": 4,
-                "ApparentPower": 26,
-                "ReactivePower": 26,
-                "Factor": 0.16,
+                "ApparentPower": 16,
+                "ReactivePower": 16,
+                "Factor": 0.24,
                 "Voltage": 226,
-                "Current": 0.117
+                "Current": 0.073
             }
         }
     },
-    "powerdisplay": 167.931,
+    "powerdisplay": 168.743,
     "energy_used": 0.0,
     "watermeter": {
         "id": "sensor-wasseruhr_anzeige",
-        "value": 7.997,
-        "state": "7.997 m\u00b3"
+        "value": 8.352,
+        "state": "8.352 m\u00b3"
     },
-    "watermeterdisplay": 7997.0,
+    "watermeterdisplay": 8352.0,
     "water_used": 0.0,
-    "installed": "2022-09-06 12:00:00",
-    "operatingtime": "einem Jahr 9 Monaten 22 Tagen und 14 Stunden",
-    "ordertaps": false
+    "ordertaps": false,
+    "hostname": "a2efdcad79ba.app",
+    "version": "1.1.2",
+    "attribution": "Data provided by"
 }

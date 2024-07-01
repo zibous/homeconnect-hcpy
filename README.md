@@ -199,12 +199,12 @@ Instead of MQTT Discovery, I use an MQTT template (see directory `/homeassistant
 ##  Questions & Open Tasks
 
 - Why are the resource data evaluated but not translated (see [payload.json](./homeassistant/payload.json))
-   - 520
-   - 535
-   - 547
-   - 4632
-   - 4641
-   - 4654
+   - 520: "2024-07-01T09:12:37"
+   - 535: false
+   - 547: false
+   - 4632: 0
+   - 4641: 0
+   - 4654: 0
 
 - How do the options work for the appliance options (see HCDevice.py lines 134 -138)
     ```python
