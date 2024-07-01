@@ -1,0 +1,18 @@
+{
+    "devices_file": "./config/devices.json",
+    "mqtt_host": "localhost",
+    "mqtt_username": "<redakted>",
+    "mqtt_password": "<redakted>",
+    "mqtt_port": 1883,
+    "mqtt_prefix": "homeconnect/",
+    "mqtt_ssl": false,
+    "mqtt_cafile": null,
+    "mqtt_certfile": null,
+    "mqtt_keyfile": null,
+    "mqtt_clientname": "lab.hcapp",
+    "domain_suffix":"",
+    "debug": false,
+    "locale": "de-de",
+    "tzinfo": "Europe/Vaduz",
+    "LOGLEVEL": "INFO"
+}

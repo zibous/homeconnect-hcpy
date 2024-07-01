@@ -40,12 +40,6 @@
 #
 # /iz/services
 
-# disabled for BOSCH SMV4HCX48E
-# - /ci/services: skip error 404 on reconnect
-# - /ci/authentication dishwasher Message Error: 404
-# - /ci/tzInfo dishwasher Message Error: 404
-# - /ro/values ERROR: dishwasher Message Error: 400 /ro/values
-
 import json
 import re
 import sys
@@ -60,12 +54,13 @@ from Crypto.Random import get_random_bytes
 ## all for logging
 from loguru import logger
 
+
 def now():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
 
 class HCDevice:
-    def __init__(self, ws, device, debug=False):
+    def __init__(self, ws, device, resources, debug=False):
         self.ws = ws
         self.features_lock = threading.Lock()
         self.features = device.get("features")
@@ -78,21 +73,23 @@ class HCDevice:
         self.services_initialized = False
         self.services = {}
         self.token = None
+        self.resources = resources
         self.connected = False
 
     def parse_values(self, values):
         if not self.features:
             return values
-
         result = {}
 
         for msg in values:
+
             uid = str(msg["uid"])
             value = msg["value"]
             value_str = str(value)
 
             name = uid
             status = None
+
             with self.features_lock:
                 if uid in self.features:
                     status = self.features[uid]
@@ -274,41 +271,72 @@ class HCDevice:
                 time.sleep(1)
                 if self.services_initialized:
                     break
+            logger.debug("ask the device (/ci/services) which services it supports, finish")
 
         # We override the version based on the registered services received above
-
         # the clothes washer wants this, the token doesn't matter,
         # although they do not handle padding characters
         # they send a response, not sure how to interpet it
         self.token = base64url_encode(get_random_bytes(32)).decode("UTF-8")
         self.token = re.sub(r"=", "", self.token)
 
-        # changed: ERROR: dishwasher Message Error: 404 /ci/authentication
-        # self.get("/ci/authentication", version=2, data={"nonce": self.token})
+        if self.resources.get("/ci/authentication", True):
+            self.get("/ci/authentication", version=2, data={"nonce": self.token})
+        else:
+            logger.debug("device /ci/authentication skipped.")
 
-        # changed: ERROR: dishwasher Message Error: 404 /ci/info
-        # self.get("/ci/info")  # clothes washer
+        if self.resources.get("/ci/info", True):
+            self.get("/ci/info")  # clothes washer
+        else:
+            logger.debug("device, clothes washer: /ci/info skipped.")
 
-        # self.get("/ci/registeredDevices")
-        self.get("/iz/info")  # dish washer
+        if self.resources.get("/ci/registeredDevices", True):
+            self.get("/ci/registeredDevices")
+        else:
+            logger.debug("device: /ci/registeredDevices skipped.")
 
-        # Retrieves registered clients like phone/hcpy itself
-        # tzInfo all returns empty?
+        if self.resources.get("/iz/info", True):
+            self.get("/iz/info")  # dish washer
+        else:
+            logger.debug("device: /iz/info skipped.")
 
-        # changed: dishwasher Message Error: 404 /ci/tzInfo
-        # self.get("/ci/tzInfo")
+        if self.resources.get("/ci/tzInfo", True):
+            # Retrieves registered clients like phone/hcpy itself
+            self.get("/ci/tzInfo")
+        else:
+            logger.debug("device: /ci/tzInfo skipped.")
 
-        # We need to send deviceReady for some devices or /ni/ will come back as 403 unauth
-        self.get("/ei/deviceReady", version=2, action="NOTIFY")
-        self.get("/ni/info")
-        self.get("/ni/config", data={"interfaceID": 0})
+        if self.resources.get("/ei/deviceReady", True):
+            # We need to send deviceReady for some devices or /ni/ will come back as 403 unauth
+            self.get("/ei/deviceReady", version=2, action="NOTIFY")
+        else:
+            logger.debug("device: /ei/deviceReady skipped.")
 
-        self.get("/ro/allMandatoryValues")
+        if self.resources.get("/ni/info", True):
+             # Network Information/IP Address etc
+            self.get("/ni/info")
+        else:
+            logger.debug("device: /ni/info skipped.")
 
-        # changed: ERROR: dishwasher Message Error: 400 /ro/values
-        # self.get("/ro/values")
+        if self.resources.get("/ni/config", True):
+            self.get("/ni/config", data={"interfaceID": 0})
+        else:
+            logger.debug("device: /ni/config skipped.")
 
-        self.get("/ro/allDescriptionChanges")
+        if self.resources.get("/ro/allMandatoryValues", True):
+            self.get("/ro/allMandatoryValues")
+        else:
+            logger.debug("device: /ro/allMandatoryValues skipped.")
+
+        if self.resources.get("/ro/values", True):
+            self.get("/ro/values")
+        else:
+            logger.debug("device: /ro/values skipped.")
+
+        if self.resources.get("/ro/allDescriptionChanges", True):
+            self.get("/ro/allDescriptionChanges")
+        else:
+            logger.debug("device: /ro/allDescriptionChanges skipped.")
 
     def handle_message(self, buf):
         msg = json.loads(buf)
@@ -350,6 +378,7 @@ class HCDevice:
                 logger.error(f"Unknown resource {resource}")
 
         elif action == "RESPONSE" or action == "NOTIFY":
+
             if resource == "/iz/info" or resource == "/ci/info":
                 if "data" in msg and len(msg["data"]) > 0:
                     # Return Device Information such as Serial Number, SW Versions, MAC Address
@@ -444,7 +473,3 @@ class HCDevice:
             logger.debug(f"Websocket error: {message}")
 
         self.ws.run_forever(on_message=_on_message, on_open=_on_open, on_close=_on_close, on_error=on_error)
-
-    # def print(self, *args):
-    #     if self.debug:
-    #         print(now(), self.name, *args)

@@ -39,6 +39,7 @@ sslpsk.sslpsk._sslobj = _sslobj
 
 
 class HCSocket:
+
     def __init__(self, host, psk64, iv64=None, domain_suffix="", debug=False):
         self.host = host
         if domain_suffix:

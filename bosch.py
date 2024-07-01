@@ -33,7 +33,7 @@ __license__ = "MIT"
 from loguru import logger
 
 logger = logger.patch(lambda record: record.update(name=record["file"].name))
-
+logger = logger.opt(colors=False)
 min_level = "INFO"
 
 
@@ -131,8 +131,10 @@ class Homeconnect:
         finally:
             return False
 
-    def timeDelta(self, strDate: str = None, shortmode: bool = True, times: str = "h") -> dict:
-        """get the time delta for the given date to now"""
+    def timeDelta(self, strDate: str = None, shortmode: bool = True, times: str = "h"):
+        """get the time delta for the given date to now
+        parameter times: y,q,m,w,d,h,min,s
+        """
         try:
             list_times = {
                 "y": ["year", "month", "day", "hour"],
@@ -143,8 +145,14 @@ class Homeconnect:
                 "h": ["hour", "minute"],
                 "min": ["minute", "second"],
             }
+            if times and times == "s":
+                d1 = arrow.get(strDate, tzinfo=self.tzinfo)
+                d2 = arrow.get(datetime.now(), tzinfo=self.tzinfo)
+                return (d2 - d1).seconds
+
             _granularity = list_times.get(times, "auto")
             return arrow.get(strDate, tzinfo=self.tzinfo).humanize(only_distance=shortmode, granularity=_granularity, locale=self.locale)
+
         except Exception as e:
             raise e
 
@@ -196,7 +204,6 @@ class Homeconnect:
 
                 states["lastupdate"] = now()
                 states["Name"] = name
-                # states["remainingseconds"] = 0
 
                 _addOns = self.addons.get(name, None)
                 if _addOns.get("installed", None):
@@ -305,7 +312,7 @@ class Homeconnect:
                 _result = client.publish(topic=f"{topic}", payload=payload, retain=True)
                 _status = _result[0]
                 if _status == 0:
-                    logger.debug(f"{name} publish send {topic} finished")
+                    logger.success(f"{name} ↠ {states.get('wslink', 'unkown')} publish send {topic} valid and finished")
                 else:
                     logger.critical(f"{name} publish failed {topic}, {payload}")
 
@@ -324,7 +331,7 @@ class Homeconnect:
             if reason_code.is_failure:
                 logger.warning(f"ERROR MQTT connection failed: unauthorized - {reason_code}")
             else:
-                logger.info(f"MQTT Brocker connection established: {reason_code}, {self.mqtt_prefix}LWT=Onine ")
+                logger.success(f"MQTT Brocker connection established: {reason_code}, {self.mqtt_prefix}LWT=Onine ")
                 client.publish(topic=f"{self.mqtt_prefix}LWT", payload="online", retain=True)
                 # Re-subscribe to all device topics on reconnection
                 for device in devices:
@@ -436,8 +443,10 @@ class Homeconnect:
                 if device.__contains__("addons"):
                     self.addons[_name] = device["addons"]
 
+                _resources = device["resources"]
+
                 mqtt_topic = self.mqtt_prefix + _name
-                thread = Thread(target=self.client_connect, args=(client, device, mqtt_topic, self.domain_suffix, self.debug))
+                thread = Thread(target=self.client_connect, args=(client, device, mqtt_topic, self.domain_suffix, _resources, self.debug))
                 thread.start()
 
             client.loop_forever()
@@ -448,7 +457,7 @@ class Homeconnect:
     ## ------------------------------------------------------------------------
     ## imported from hcmqtt.py, sorry...
     ## ------------------------------------------------------------------------
-    def client_connect(self, client, device, mqtt_topic, domain_suffix, debug):
+    def client_connect(self, client, device, mqtt_topic, domain_suffix, resources, debug):
         """connect to the client"""
 
         host = device["host"]
@@ -500,9 +509,8 @@ class Homeconnect:
                 """connect to the device"""
                 logger.debug(f"{name} connecting to {host}")
                 ws = HCSocket(host=host, psk64=device["key"], iv64=device.get("iv", None), domain_suffix=domain_suffix, debug=debug)
-                self.dev[name] = HCDevice(ws=ws, device=device, debug=self.debug)
+                self.dev[name] = HCDevice(ws=ws, device=device, resources=resources, debug=self.debug)
                 self.dev[name].run_forever(on_message=on_message, on_open=on_open, on_close=on_close)
-
             except Exception as e:
                 logger.warning(f"{device['name']}, ERROR  {str(e)}, line {sys.exc_info()[-1].tb_lineno}, Offline")
                 client.publish(topic=f"{mqtt_topic}/LWT", payload="offline", retain=True)
