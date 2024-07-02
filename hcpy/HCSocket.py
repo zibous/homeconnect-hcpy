@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Sourcecode from:
+# url: https://github.com/hcpy2-0/hcpy
+# maintainer: pmagyar, Meatballs1
+
 # Create a websocket that wraps a connection to a
 # Bosh-Siemens Home Connect device
 import json

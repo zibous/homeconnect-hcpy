@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Sourcecode from:
+# url: https://github.com/hcpy2-0/hcpy
+# maintainer: pmagyar, Meatballs1
+
+
 # Contact Bosh-Siemens Home Connect devices
 # and connect their messages to the mqtt server
 import os
@@ -36,7 +43,7 @@ def runHc2mqtt(config_file: str = "./config/config.json"):
                     domain_suffix=param.get("domain_suffix", ""),
                     debug=param.get("debug", False),
                 )
-                
+
     except Exception as e:
         print(now(), "runHc2mqtt", "ERROR", e, file=sys.stderr)
     return

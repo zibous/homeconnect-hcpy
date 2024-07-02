@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Sourcecode from:
+# url: https://github.com/hcpy2-0/hcpy
+# maintainer: pmagyar, Meatballs1
+
 # This directly follows the OAuth login flow that is opaquely described
 # https://github.com/openid/AppAuth-Android
 # A really nice walk through of how it works is:

@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Sourcecode from:
+# url: https://github.com/hcpy2-0/hcpy
+# maintainer: pmagyar, Meatballs1
+
 # Convert the featuremap and devicedescription XML files into a single JSON
 # this collapses the XML entities and duplicates some things, but makes for
 # easier parsing later

@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Sourcecode from:
+# url: https://github.com/hcpy2-0/hcpy
+# maintainer: pmagyar, Meatballs1
+
+
 # Parse messages from a Home Connect websocket (HCSocket)
 # and keep the connection alive
 #

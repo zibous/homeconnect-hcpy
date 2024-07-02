@@ -119,6 +119,10 @@ and [devices.json](./homeassistant/devices.json)
 
 ### Python APP
 
+<img src="./images/homeconnect-app.png" width="100%" title="homeconnect bosch app" />
+
+<br/>
+
 ```bash
 ⚡ user@linux: /dockerapps/homeconnect:  python bosch.app
 ```
@@ -227,3 +231,4 @@ Instead of MQTT Discovery, I use an MQTT template (see directory `/homeassistant
 - [Bosch Products Homepage](https://www.bosch-home.at)
 - [Home Connect – Connect your household](https://api-docs.home-connect.com/quickstart/)
 - [Connect Developer Program](https://developer.home-connect.com/)
+- [Pynsource - UML for Python](https://pynsource.com/)

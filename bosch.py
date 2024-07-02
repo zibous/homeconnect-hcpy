@@ -1,7 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# ----------------------------------------------------------------
+# Copyright (c) 2024 Peter Siebler
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Distribution License
+# which accompanies this distribution.
+#
+# Contributors:
+#    Peter Siebler - initial implementation
+#    All rights reserved.
+# ----------------------------------------------------------------
+
 import os
 import sys
-import logging
+
 import json
 import time
 from threading import Thread
@@ -23,7 +37,6 @@ from hcpy.HCSocket import HCSocket, now
 from hcpy.HCDevice import HCDevice
 
 dirname, filename = os.path.split(os.path.abspath(__file__))
-
 __APPLICATION_NAME__ = os.path.basename(dirname)
 __author__ = "Peter Siebler"
 __version__ = "1.1.2"
@@ -31,12 +44,9 @@ __license__ = "MIT"
 
 ## all for logging
 from loguru import logger
-
 logger = logger.patch(lambda record: record.update(name=record["file"].name))
 logger = logger.opt(colors=False)
 min_level = "INFO"
-
-
 def setlogLevel(min_level: str = min_level):
     """set the log level for the current logger:
     TRACE :   5
@@ -47,10 +57,8 @@ def setlogLevel(min_level: str = min_level):
     ERROR:    40
     CRITICAL: 50
     """
-
     def my_filter(record):
         return record["level"].no >= logger.level(min_level).no
-
     logger.remove()
     logger.add(sys.stderr, filter=my_filter)
 
@@ -94,7 +102,11 @@ class Homeconnect:
         """
         self.state = "off"
         self.config_file = config_file
-        self.__loadSettings__()
+
+        if self.__loadSettings__():
+            self.run()
+        else:
+            logger.critical("Fatal Error. can'nt run homeconnect app!")
 
     def __loadSettings__(self) -> bool:
         """load all settings from the config json file
@@ -529,6 +541,5 @@ if __name__ == "__main__":
     try:
         logger.info(f"APP {__APPLICATION_NAME__}, Version {__version__} starting")
         hc = Homeconnect()
-        hc.run()
     except Exception as e:
         logger.critical(f"APP {__APPLICATION_NAME__} ERROR {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
