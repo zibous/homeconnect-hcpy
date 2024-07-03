@@ -10,9 +10,11 @@
     "mqtt_certfile": null,
     "mqtt_keyfile": null,
     "mqtt_clientname": "lab.hcapp",
-    "domain_suffix":"",
+    "domain_suffix": "",
     "debug": false,
     "locale": "de-de",
     "tzinfo": "Europe/Vaduz",
-    "LOGLEVEL": "INFO"
+    "LOGLEVEL": "INFO",
+    "hc_username": "<redakted>",
+    "hc_password": "<redakted>"
 }

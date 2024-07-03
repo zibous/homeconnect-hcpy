@@ -16,6 +16,12 @@
 import os
 import sys
 
+dirname, filename = os.path.split(os.path.abspath(__file__))
+__APPLICATION_NAME__ = os.path.basename(dirname)
+__author__ = "Peter Siebler"
+__version__ = "1.1.3"
+__license__ = "MIT"
+
 import json
 import time
 from threading import Thread
@@ -33,14 +39,9 @@ from paho.mqtt.packettypes import PacketTypes
 properties = Properties(PacketTypes.CONNECT)
 properties.SessionExpiryInterval = 30 * 60  # in seconds
 
+from hcpy.account import login
 from hcpy.HCSocket import HCSocket, now
 from hcpy.HCDevice import HCDevice
-
-dirname, filename = os.path.split(os.path.abspath(__file__))
-__APPLICATION_NAME__ = os.path.basename(dirname)
-__author__ = "Peter Siebler"
-__version__ = "1.1.2"
-__license__ = "MIT"
 
 ## all for logging
 from loguru import logger
@@ -49,13 +50,16 @@ logger = logger.opt(colors=False)
 min_level = "INFO"
 def setlogLevel(min_level: str = min_level):
     """set the log level for the current logger:
-    TRACE :   5
-    DEBUG :  10
-    INFO:    20
-    SUCCESS:  25
-    WARNING:  30
-    ERROR:    40
-    CRITICAL: 50
+    ### Args:
+        - `min_level (str)`: min level for logging
+
+        TRACE :   5
+        DEBUG :  10
+        INFO:    20
+        SUCCESS:  25
+        WARNING:  30
+        ERROR:    40
+        CRITICAL: 50
     """
     def my_filter(record):
         return record["level"].no >= logger.level(min_level).no
@@ -83,6 +87,8 @@ class Homeconnect:
     locale: str = "de"
     tzinfo: str = "Europe/Vaduz"
     LOGLEVEL: str = "WARNING"
+    hc_username: str = None
+    hc_password: str = None
 
     # device dict
     dev = {}
@@ -101,8 +107,7 @@ class Homeconnect:
         param str config_file homeconnect application settings
         """
         self.state = "off"
-        self.config_file = config_file
-
+        self.config_file = os.path.abspath(config_file)
         if self.__loadSettings__():
             self.run()
         else:
@@ -113,35 +118,49 @@ class Homeconnect:
         and store the items to the class object attributes (device settings, mqttbrocker...)
         """
         try:
+            # check python version
             if not ((sys.version_info.major == 3 and sys.version_info.minor == 11) and sys.version_info.micro == 9):
                 logger.warning(f"Application needs Python 3.11.9")
 
+            # check config settings
             if os.path.isfile(self.config_file):
                 with open(self.config_file, "r", encoding="utf8") as f:
                     param = json.load(f)
                 for key, value in param.items():
                     setattr(self, key, value)
                 setlogLevel(self.LOGLEVEL)
+                self.devices_file = os.path.abspath(self.devices_file)
                 logger.success(f"Application config file{self.config_file} found.")
             else:
                 logger.critical(f"Application config file {self.config_file} not found.")
                 sys.exit(f"Missing config file {self.config_file}")
+
+            # check devices file
             if os.path.isfile(self.devices_file):
                 logger.success(f"Devices file {self.devices_file} found.")
             else:
-                logger.critical(f"Devices file {self.devices_file} not found, run hc-login first.")
-                sys.exit(f"Missing Devices File  {self.devices_file}")
+                logger.info("Try to connect to Homeconnect Account")
+                _configdir = os.path.dirname(os.path.abspath(self.config_file))
+                if self.hc_username and self.hc_password:
+                    hca = login.HomeconnecAccount(email=self.hc_username, password=self.hc_password, configdir=_configdir)
+                    if not hca.ready:
+                        logger.critical(f"Devices file {self.devices_file} not found, run hc-login first.")
+                        sys.exit(f"Missing Devices File  {self.devices_file}")
+                    else:
+                        logger.success("Homeconnect config valid.")
+                else:
+                    sys.exit(f"Invalid config file {self.config_file}, check username and password !")
 
             # be shure that we have a unique client
             _id = base64url_encode(get_random_bytes(4)).decode("UTF-8")
             self.mqtt_clientname = f"bosch-{_id}"
-            logger.debug(f"Application ready to run")
+            logger.debug("Application ready to run")
             return True
 
         except Exception as e:
-            raise e
-        finally:
-            return False
+            logger.critical(f"Error {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
+
+        return False
 
     def timeDelta(self, strDate: str = None, shortmode: bool = True, times: str = "h"):
         """get the time delta for the given date to now
@@ -327,6 +346,7 @@ class Homeconnect:
 
                 _result = client.publish(topic=f"{topic}", payload=payload, retain=True)
                 _status = _result[0]
+
                 if _status == 0:
                     logger.success(f"{name} ↠ {states.get('wslink', 'unkown')} publish send {topic} valid and finished")
                 else:

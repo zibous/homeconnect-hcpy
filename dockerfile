@@ -15,7 +15,7 @@ WORKDIR /app
 COPY ./requirements.txt ./
 
 RUN apt-get update && \
-  apt-get install -y --no-install-recommends gcc python3-dev libssl-dev libxml2-dev libxslt-dev python3-dev iputils-ping jq && \
+  apt-get install -y --no-install-recommends gcc python3-dev libssl-dev libxml2-dev libxslt-dev python3-dev jq && \
   pip3 install --no-cache-dir --upgrade --root-user-action=ignore -r requirements.txt && \
   apt-get remove -y gcc python3-dev libssl-dev && \
   apt-get autoremove -y

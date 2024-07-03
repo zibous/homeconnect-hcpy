@@ -37,10 +37,12 @@ and should prevent most any random attacker on your network from being able to
 
 *WARNING: This tool not ready for prime time and is still beta!*
 
-**More Information for details see**: <br/>
+<br/>
+
+**More Information for details see**:
+
 [![](https://img.shields.io/badge/Info_hcpy_lib-orange?style=for-the-badge)](https://github.com/hcpy2-0/hcpy)
 
-<br/>
 
 ### Used devices
 
@@ -48,7 +50,15 @@ and should prevent most any random attacker on your network from being able to
 - [Powermeter `Sonoff Pow`](https://tasmota.github.io/docs/devices/Sonoff-Pow/)
 - [Watermeter `ESPHome+ESP32+CC1101`](https://github.com/zibous/ha-watermeter)
 
-<hr size="1">
+
+### Requirements
+  - Python 3.11.9 or Docker app with Python 3.11.9
+  - Valid singlekey-id account (username, password)
+  - Device registered with singlekey-id account
+  - devices.json
+  - config.json
+
+
 <br/>
 
 ## Setup
@@ -77,61 +87,79 @@ Go to your desired test directory, and:
 
 <br/>
 
-## Create `devices.json`
-
-The `hc-login.py ` script perfoms the OAuth process to login to your
-Home Connect account with your usename and password.  It
-receives a bearer token that can then be used to retrieves
-a list of all the connected devices, their authentication
-and encryption keys, and XML files that describe all of the
-features and options.
-
-### Requirements:
-
-  - Valid singlekey-id account (username, password)
-  - Device registered with singlekey-id account
-
-<br/>
-
-```bash
-  ⚡ user@linux: python hc-login.py singlekey.id.email singlekey.id.password >config/devices.json
-```
-
-<br/>
-
-This only needs to be done once or when you add new devices;
-the resulting configuration JSON file *should* be sufficient to
-connect to the devices on your local network, assuming that
-your mDNS or DNS server resolves the names correctly.
-
-Result for Dishwasher Bosch SMV4HCX48E/24: [devices.json](./homeassistant/devices_dishwasher.json)
-
-<br/><br/>
-
 ## Start Application
 
-After the config.json and devices.json are in the ./config directory, the application can be started with the python command
-
-Use the following ./config/config.json example see: [config.json](./homeassistant/config.json)
-and [devices.json](./homeassistant/devices.json)
+Template for the  `config.json` see: [config.json](./homeassistant/config.json)<br/>
+After the `config.json` is valid in the ./config directory, the application can be started with the python command
 
 <br/>
 
 ### Python APP
+
+This application (`bosch.py`) will establish websockets to the local devices and
+transform their messages into MQTT JSON messages.
+The exact format is likely to change; it is currently a thin translation layer over
+the XML retrieved from cloud servers during the initial configuration.
+ <br/>
+
+ #### Workflow
+
+- Start App
+  - Check config.json
+  - Check devices.json
+    - If not present login to Homeconnect to get the
+      devices.json
+  - Connect local to the device
+    - Get the device state dat
+  - Publish the device state data
+    - Wait for next device state data
+
+<br/>
 
 <img src="./images/homeconnect-app.png" width="100%" title="homeconnect bosch app" />
 
 <br/>
 
 ```bash
-⚡ user@linux: /dockerapps/homeconnect:  python bosch.app
+⚡ user@linux: /dockerapps/homeconnect: python bosch.py
 ```
 <br/>
+
+#### First Start - creates the `devices.json`
+
+If no `devices.json` is present, the application perfoms the
+OAuth process to login to your Home Connect account with your usename and password. </br>
+It receives a bearer token that can then be used to retrieves
+a list of all the connected devices, their authentication
+and encryption keys, and XML files that describe all of the
+features and options and saves the data to the `devices.json`.
+
+#### Requirements:
+
+  - Valid singlekey-id account (username, password) see `devices.json`
+  - Device registered with singlekey-id account
+
+<br/>
+This only needs to be done once or when you add new devices;
+the resulting configuration JSON file *should* be sufficient to
+connect to the devices on your local network, assuming that
+your mDNS or DNS server resolves the names correctly.
+
+
+<br>
+
+Result for Dishwasher Bosch SMV4HCX48E/24 s
+ee: [devices.json](./homeassistant/devices_dishwasher.json)
+
+
+<br><br>
 
 
 ### Docker APP
 The application can also be installed with a Docker installation.
 A local Docker image is created with `build.sh` and then installed.
+
+![Docker Application](./images/docker_app.png "Docker Application")
 
 Build script see:  [Docker build script](./build.sh)
 
@@ -186,7 +214,7 @@ Go to your desired test directory, and:
 
 ## MQTT Payload
 
-The application always sends an MQTT message when something has changed in the `states`.
+The application always sends an MQTT message when something has changed in the `states`. <br/>
 Sample output see: [payload.json](./homeassistant/payload.json)<br/>
 
 <br/>
@@ -209,6 +237,9 @@ Instead of MQTT Discovery, I use an MQTT template (see directory `/homeassistant
    - 4632: 0
    - 4641: 0
    - 4654: 0
+   - mqtt payload </br>
+     <img src="./images/mqtt_info.png" width="50%" title="homeconnect bosch app" />
+
 
 - How do the options work for the appliance options (see HCDevice.py lines 134 -138)
     ```python
@@ -219,6 +250,14 @@ Instead of MQTT Discovery, I use an MQTT template (see directory `/homeassistant
                     raise ValueError(f"Unable to configure appliance. Option UID
                                        {option_uid} is not" " valid for this device.")
     ```
+- Error ping/pong timed out
+  I haven't been able to find out what the cause is yet. But it's not critical, as it only occurs once a day.
+  It could be due to the WiFi or the device ?
+
+  ```log
+   2024-07-03 11:36:15.887 | ERROR    | hcpy.HCSocket:_on_error:206 - error ping/pong timed out
+  ```
+
 
 <br/><br/>
 
