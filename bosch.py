@@ -247,10 +247,6 @@ class Homeconnect:
                     logger.debug(f"{name} Calc the water and energy usage")
                     states["isrunning"] = False
 
-                    if states.__contains__("RemainingProgramTime"):
-                        _value = states.get("RemainingProgramTime", 0)
-                        states["remainingseconds"] = "%d:%02d" % (_value / 60 / 60, (_value / 60) % 60)
-
                     # get the current status for the dishwasher
                     _dws = states.get("PowerState", "Off") == "On" and int(states.get("ProgramProgress", 1)) > 0
                     _dws = self.status(_dws)
@@ -338,7 +334,7 @@ class Homeconnect:
 
                 states["hostname"] = "{}.{}".format(os.uname().nodename, __APPLICATION_NAME__)
                 states["version"] = __version__
-                states["attribution"] = "Data provided by".format(__APPLICATION_NAME__)
+                states["attribution"] = "Data provided by {}".format(__APPLICATION_NAME__)
 
                 ## publish the new state
                 payload = json.dumps(states, ensure_ascii=True)

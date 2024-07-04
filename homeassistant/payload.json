@@ -7,7 +7,7 @@
     "ActiveProgram": 0,
     "SelectedProgram": 8195,
     "RemoteControlStartAllowed": true,
-    "520": "2024-07-01T09:12:37",
+    "520": "2024-07-04T13:06:18",
     "RemoteControlActive": true,
     "AquaStopOccured": "Off",
     "DoorState": "Closed",
@@ -71,40 +71,40 @@
         "list": []
     },
     "wslink": "/ro/allMandatoryValues",
-    "lastupdate": "2024-07-01 11:12:38.396305",
+    "lastupdate": "2024-07-04 15:06:24.655692",
     "installed": "2022-09-06 12:00:00",
-    "operatingtime": "vor einem Jahr 9 Monaten 24 Tagen und 11 Stunden",
+    "operatingtime": "vor einem Jahr 9 Monaten 27 Tagen und 15 Stunden",
     "isrunning": false,
     "remainingseconds": "2:20",
     "taskstate": "idle",
     "powermeter": {
         "StatusSNS": {
-            "Time": "2024-07-01T10:12:38",
+            "Time": "2024-07-04T14:06:25",
             "ENERGY": {
                 "TotalStartTime": "2022-09-03T13:02:25",
-                "Total": 168.743,
-                "Yesterday": 0.061,
-                "Today": 0.025,
-                "Power": 4,
-                "ApparentPower": 16,
-                "ReactivePower": 16,
-                "Factor": 0.24,
-                "Voltage": 226,
-                "Current": 0.073
+                "Total": 168.935,
+                "Yesterday": 0.059,
+                "Today": 0.034,
+                "Power": 3,
+                "ApparentPower": 20,
+                "ReactivePower": 20,
+                "Factor": 0.14,
+                "Voltage": 225,
+                "Current": 0.091
             }
         }
     },
-    "powerdisplay": 168.743,
+    "powerdisplay": 168.935,
     "energy_used": 0.0,
     "watermeter": {
         "id": "sensor-wasseruhr_anzeige",
-        "value": 8.352,
-        "state": "8.352 m\u00b3"
+        "value": 8.994,
+        "state": "8.994 m\u00b3"
     },
-    "watermeterdisplay": 8352.0,
+    "watermeterdisplay": 8994.0,
     "water_used": 0.0,
     "ordertaps": false,
-    "hostname": "a2efdcad79ba.app",
-    "version": "1.1.2",
+    "hostname": "5291eee6f294.app",
+    "version": "1.1.3",
     "attribution": "Data provided by"
 }
