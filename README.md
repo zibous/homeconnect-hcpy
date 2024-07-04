@@ -1,9 +1,15 @@
 # Homeconnect  - hcpy for Bosch Dishwasher
 
+![version](https://img.shields.io/badge/version-1.1.3-blue)
+![coverage](https://img.shields.io/badge/coverage-80%25-yellowgreen)
+![Code size](https://img.shields.io/github/languages/code-size/zibous/homeconnect-hcpy)
 [![License][license-shield]][license]
 [![Open in Visual Studio Code][open-in-vscode-shield]][open-in-vscode]
 [![Python 3.11.9](https://img.shields.io/badge/python-3.11.9-blue.svg)](https://www.python.org/downloads/release/python-3119/)
+![codacy](https://img.shields.io/badge/codacy-B-green)
+![downloads](https://img.shields.io/badge/downloads-13k%2Fmonth-brightgreen)
 [![Support author][donate-me-shield]][donate-me]
+
 
 [license-shield]: https://img.shields.io/static/v1?label=License&message=MIT&color=orange&logo=license
 [license]: https://opensource.org/licenses/MIT
@@ -55,8 +61,9 @@ and should prevent most any random attacker on your network from being able to
   - Python 3.11.9 or Docker app with Python 3.11.9
   - Valid singlekey-id account (username, password)
   - Device registered with singlekey-id account
-  - devices.json
-  - config.json
+  - [Application configuration (config.json)](./homeassistant/config_template.json)
+  - [Homeconnect Devices configuration (devices.json)](./homeassistant/devices.json)
+
 
 
 <br/>
@@ -71,30 +78,25 @@ I have had good experiences with `pyenv` With `pyenv` you can use your own Pytho
 
 ## Python Setup
 
-Go to your desired test directory, and:
+Go to your desired test directory (for example: /dockerapps/homeconnect), and:
 
 ```bash
-⚡ user@linux: pyenv --version
-⚡ user@linux: pyenv install 3.11.9
-⚡ user@linux: pyenv virtualenv 3.11.9 apps
-⚡ user@linux: pyenv local apps
-⚡ user@linux: git clone https://github.com/hcpy2-0/hcpy
-⚡ user@linux: cd hcpy
-⚡ user@linux: pip install -r requirements.txt
-⚡ user@linux: pip install pipreqs
-⚡ user@linux: pip install pyclean
+⚡ root@linux: pyenv --version
+⚡ root@linux: pyenv install 3.11.9
+⚡ root@linux: pyenv virtualenv 3.11.9 apps
+⚡ root@linux: cd /dockerapps
+⚡ root@linux: git clone https://github.com/zibous/homeconnect-hcpy.git
+⚡ root@linux: cd /dockerapps/homeconnect-hcpy
+⚡ root@linux: pyenv local apps
+⚡ root@linux: pip install -r requirements.txt
+⚡ root@linux: pip install pipreqs
+⚡ root@linux: pip install pyclean
 ```
 
 <br/>
 
-## Start Application
 
-Template for the  `config.json` see: [config.json](./homeassistant/config.json)<br/>
-After the `config.json` is valid in the ./config directory, the application can be started with the python command
-
-<br/>
-
-### Python APP
+## Python APP
 
 This application (`bosch.py`) will establish websockets to the local devices and
 transform their messages into MQTT JSON messages.
@@ -105,27 +107,37 @@ the XML retrieved from cloud servers during the initial configuration.
  #### Workflow
 
 - Start App
-  - Check config.json
-  - Check devices.json
-    - If not present login to Homeconnect to get the
-      devices.json
+
+  - Check and load [config.json](./homeassistant/config_template.json)
+  - Check and load [devices.json](./homeassistant/devices_dishwasher.json)
+    - If not present login to Homeconnect to get the devices.json
   - Connect local to the device
-    - Get the device state dat
+    - Get the device state data
   - Publish the device state data
+    - [MQTT Payload](./homeassistant/payload.json)
     - Wait for next device state data
 
 <br/>
+
+#### APP Classes
 
 <img src="./images/homeconnect-app.png" width="100%" title="homeconnect bosch app" />
 
 <br/>
 
-```bash
-⚡ user@linux: /dockerapps/homeconnect: python bosch.py
-```
+## Start Application
+
+Template for the  `config.json` see: [config.json](./homeassistant/config_template.json)<br/>
+After the `config.json` is valid in the ./config directory, the application can be started with the python command:
+
 <br/>
 
-#### First Start - creates the `devices.json`
+```bash
+⚡ root@linux: /dockerapps/homeconnect: python bosch.py
+```
+
+
+### First Start - creates the `devices.json`
 
 If no `devices.json` is present, the application perfoms the
 OAuth process to login to your Home Connect account with your usename and password. </br>
@@ -146,10 +158,27 @@ connect to the devices on your local network, assuming that
 your mDNS or DNS server resolves the names correctly.
 
 
+#### TODO after first start
+
+  - [ ] **check `config.json`**
+    - [ ] if no `config.json` is present (hc_username, hc_password)
+
+  - [ ] **check `devices.json`**
+    - [ ] Check whether the device `host` is accessible via the network
+    - [ ] Optional change `host`entry to `IP Address`
+    - [ ] Optional add `resources` section to prevent 400/404 errors
+    - [ ] Optional add `addons` section if a power meter, water meter is present
+
+  - [ ] **Logging**
+     - [ ] Change LOGLEVEL to `DEBUG`, see:`devices.json`
+
+  - [ ] **Optiona Test** [hcpy Testcase](./hcpy_org/README.md)
+       - [ ] check [Issues hcpy2-0](https://github.com/hcpy2-0/hcpy/issues)
+
 <br>
 
 Result for Dishwasher Bosch SMV4HCX48E/24 s
-ee: [devices.json](./homeassistant/devices_dishwasher.json)
+see: [devices.json](./homeassistant/devices_dishwasher.json)
 
 
 <br><br>
@@ -167,7 +196,7 @@ Build script see:  [Docker build script](./build.sh)
 
 Go to your desired test directory, and:
 ```bash
-⚡ user@linux: /dockerapps/homeconnect:  bash build.sh
+⚡ root@linux: /dockerapps/homeconnect:  bash build.sh
 ```
 
 <br/>
@@ -185,9 +214,10 @@ Go to your desired test directory, and:
 
 - **h2mqtt.py**
    - `bosch.app` instead of `h2mqtt.py`
-   -  loading `settings.json` instead of `settings.ini`
-   -  simple dishwascher state manager
-   -  `onStateChanged` to get the energie- and water consumption
+   - `bosch.app` included `hc-login` to get the `devices.json` on first start
+   - loading `settings.json` instead of `settings.ini`
+   - simple dishwascher state manager
+   - `onStateChanged` to get the energie- and water consumption
 
 - **HCDevice.py**
 
@@ -266,6 +296,7 @@ Instead of MQTT Discovery, I use an MQTT template (see directory `/homeassistant
 
 - [Python tool to talk to Home Connect appliances osresearch/hcpy](https://github.com/osresearch/hcpy)
 - [Python tool to talk to Home Connect appliances hcpy2-0/hcpy](https://github.com/hcpy2-0/hcpy)
+- [Issues hcpy2-0](https://github.com/hcpy2-0/hcpy/issues)
 - [SingleKey ID, One Digital Key for Many Brands](https://singlekey-id.com)
 - [Bosch Products Homepage](https://www.bosch-home.at)
 - [Home Connect – Connect your household](https://api-docs.home-connect.com/quickstart/)

@@ -9,6 +9,7 @@
 # https://github.com/openid/AppAuth-Android
 # A really nice walk through of how it works is:
 # https://auth0.com/docs/get-started/authentication-and-authorization-flow/call-your-api-using-the-authorization-code-flow-with-pkce
+
 import sys
 import io
 import json
@@ -171,12 +172,13 @@ def getConfig(email: str, password: str, devices_file=None) -> bool:
             logger.critical(f"Unable to find session data in login page, Response {r.text}")
             logger.critical("Login ended!")
             exit(1)
-        session_data = match[1]
+
+        ### session_data = match[1]
 
         # now that we have a session id, contact the
         # single key host to start the new login flow
         singlekey_host = "https://singlekey-id.com"
-        login_url = singlekey_host + "/auth/en-us/log-in/"
+        ### login_url = singlekey_host + "/auth/en-us/log-in/"
 
         preauth_url = singlekey_host + "/auth/connect/authorize"
         preauth_query = {
@@ -279,7 +281,7 @@ def getConfig(email: str, password: str, devices_file=None) -> bool:
 
         logger.debug(f"{code} {grant_type} {state}")
 
-        auth_url = base_url + "login"
+        #### auth_url = base_url + "login"
         token_url = base_url + "token"
 
         token_fields = {
