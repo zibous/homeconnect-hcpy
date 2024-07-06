@@ -47,10 +47,13 @@ settings.py
 config.py
 internal/
 test.py
-config/**
+config/*.json
 ./hcpy/bosch/**
 **/.zip
 **/test
+logs/**
 
 hcpy/bosch/012090517380017161.zip
 /hcpy/bosch
+/config/archiv
+data/payload.json

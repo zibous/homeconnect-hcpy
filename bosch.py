@@ -19,7 +19,7 @@ import sys
 dirname, filename = os.path.split(os.path.abspath(__file__))
 __APPLICATION_NAME__ = os.path.basename(dirname)
 __author__ = "Peter Siebler"
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 __license__ = "MIT"
 
 import json
@@ -31,6 +31,7 @@ from Crypto.Random import get_random_bytes
 from dateutil.parser import *
 from datetime import datetime
 import arrow
+import shutil
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.properties import Properties
@@ -45,6 +46,8 @@ from hcpy.HCDevice import HCDevice
 
 ## all for logging
 from loguru import logger
+‚
+## init logger
 logger = logger.patch(lambda record: record.update(name=record["file"].name))
 logger = logger.opt(colors=False)
 min_level = "INFO"
@@ -63,8 +66,10 @@ def setlogLevel(min_level: str = min_level):
     """
     def my_filter(record):
         return record["level"].no >= logger.level(min_level).no
+
     logger.remove()
     logger.add(sys.stderr, filter=my_filter)
+    setlogLevel(min_level)
 
 
 class Homeconnect:
@@ -101,6 +106,8 @@ class Homeconnect:
     # power and water meter
     powermeterdisplay: float = 0.000
     waterdisplay: float = 0.000
+    logdir: str = None
+    payloadDir: str = None
 
     def __init__(self, config_file: str = "./config/config.json"):
         """home connect class
@@ -108,6 +115,19 @@ class Homeconnect:
         """
         self.state = "off"
         self.config_file = os.path.abspath(config_file)
+
+        if os.path.isdir(os.path.abspath("./logs")):
+            self.logdir = os.path.abspath("./logs")
+            logger.debug(f"Log dir enabled: {self.logdir}")
+        else:
+            logger.debug(f"Log dir disabled, directory not present!")
+
+        if os.path.isdir("./data"):
+            self.payloadDir = os.path.abspath("./data")
+            logger.debug(f"Payload dir enabled: {self.payloadDir}")
+        else:
+            logger.debug(f"data dir disabled, directory not present!")
+
         if self.__loadSettings__():
             self.run()
         else:
@@ -133,6 +153,10 @@ class Homeconnect:
                 logger.success(f"Application config file{self.config_file} found.")
             else:
                 logger.critical(f"Application config file {self.config_file} not found.")
+                os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+                _src = os.path.abspath("./homeassistant/config_template.json")
+                shutil.copy2(src=_src, dst=self.config_file)
+                logger.info(f"Application config file {self.config_file} created. Edit entries for start application !")
                 sys.exit(f"Missing config file {self.config_file}")
 
             # check devices file
@@ -226,6 +250,100 @@ class Homeconnect:
         else:
             self._state = 0
 
+    def __loadPayload__(self) -> dict:
+        """loads the previous states from the payload file"""
+        try:
+            if self.payloadDir:
+                _file = f"{self.payloadDir}/payload.json"
+                _states = {}
+                ## try to load the prev states
+                if os.path.isfile(_file):
+                    with open(_file, "r") as f:
+                        _states = json.load(f)
+                    logger.debug(f"Prev states loaded from {_file}")
+                    return _states
+        except Exception as e:
+            logger.critical(f"{str(e)}, line {sys.exc_info()[-1].tb_lineno}")
+
+        logger.warning("No prev states found !")
+        return None
+
+    def __buildPayload__(self, states: dict = None) -> dict:
+        """## build the payload
+
+        ### Args:
+            - `states (dict, optional)`: current dishwasher service states. Defaults to None.
+
+        ### Returns:
+            - `dict`: all states (states merged with previous one)
+        """
+        try:
+            if states:
+                ## try to load the previous states
+                _states = self.__loadPayload__()
+                if _states:
+                    ## transfer the new stats
+                    logger.debug(f"Merge states with previous states")
+                    ## interate thow all states items
+                    for key in states.keys():
+                        _value = states.get(key, "None")
+                        _states[key] = _value
+                else:
+                    logger.debug(f"Prev not states found")
+                    _states = states
+                _file = f"{self.payloadDir}/payload.json"
+                os.makedirs(os.path.dirname(_file), exist_ok=True)
+                with open(_file, "w", encoding="utf8") as f:
+                    f.write(json.dumps(obj=_states, indent=4, ensure_ascii=True))
+                logger.debug(f"Prev states saved to {_file}")
+                return _states
+            else:
+                logger.critical("No States found !")
+
+        except Exception as e:
+            logger.critical(f"{str(e)}, line {sys.exc_info()[-1].tb_lineno}")
+
+        return states
+
+    def __saveLog__(self, states: dict = None, fields:list=None):
+        """## save states log if states present and log dir enabled
+
+        ### Args:
+            - `states (dict, optional)`: device states. Defaults to None.
+            - `fields (list, optional)`: filter fields for log. Defaults to None.
+        """
+        def my_filtering_function(pair):
+            key, value = pair
+            if key in fields:
+                return True
+            else:
+                return False
+
+        try:
+            if not states or not fields or not self.logdir:
+                logger.debug("logger not enabled (not states or fields or no log dir), save logfiles skipped")
+                return
+            # filter for states
+            result = dict(filter(my_filtering_function, states.items()))
+            header = None
+            if result:
+                _current_datetime = datetime.now().strftime("%Y-%m")
+                _devicename = states.get("Name", "device")
+                _file = f"{self.logdir}/{_devicename}.log-{_current_datetime}.csv"
+                if not os.path.isfile(_file):
+                    header = ",".join(result.keys())
+                strData = ",".join(str(val) for key, val in result.items())
+                with open(_file, "a") as f:
+                    if header:
+                        f.write(f"Timestamp,{header}\n")
+                    f.write(f"{now()},{strData}\n")
+                logger.info(f"Saved states data to log file {_file}")
+            else:
+                logger.debug("No states value found, save logfiles skipped")
+
+        except Exception as e:
+            logger.critical(f"{str(e)}, line {sys.exc_info()[-1].tb_lineno}")
+
     def onStateChanged(self, client, name: str, topic: str, states: dict) -> bool:
         """simple callback state payload from client add additional data (energy, water)"""
         try:
@@ -248,7 +366,8 @@ class Homeconnect:
                     states["isrunning"] = False
 
                     # get the current status for the dishwasher
-                    _dws = states.get("PowerState", "Off") == "On" and int(states.get("ProgramProgress", 1)) > 0
+                    logger.debug(f"Powerstate: {states.get('PowerState', 'Off')}, ProgramProgress:{states.get('ProgramProgress', 1)}")
+                    _dws = states.get( int(states.get("ProgramProgress", 0)) > 0)
                     _dws = self.status(_dws)
 
                     if self.status(_dws) == 1:
@@ -334,12 +453,22 @@ class Homeconnect:
 
                 states["hostname"] = "{}.{}".format(os.uname().nodename, __APPLICATION_NAME__)
                 states["version"] = __version__
+
                 states["attribution"] = "Data provided by {}".format(__APPLICATION_NAME__)
+                if __APPLICATION_NAME__ == "app":
+                    states["attribution"] = "Data provided by docker application {}".format(os.uname().nodename)
+
+                ## build the payload
+                payload = self.__buildPayload__(states=states)
+                if not payload:
+                    logger.critical("No payload (states) found!, no publish to MQTT Brocker !")
+                    return False
+
+                self.__saveLog__(states=payload, fields=_addOns.get("logfields", None))
+                payload = json.dumps(payload, ensure_ascii=True)
 
                 ## publish the new state
-                payload = json.dumps(states, ensure_ascii=True)
                 logger.info(f"{name} publish state data {states.get('wslink', 'unkown')} to {topic}")
-
                 _result = client.publish(topic=f"{topic}", payload=payload, retain=True)
                 _status = _result[0]
 
@@ -347,7 +476,6 @@ class Homeconnect:
                     logger.success(f"{name} ↠ {states.get('wslink', 'unkown')} publish send {topic} valid and finished")
                 else:
                     logger.critical(f"{name} publish failed {topic}, {payload}")
-
                 return True
 
         except Exception as e:
@@ -438,7 +566,6 @@ class Homeconnect:
                 devices = json.load(f)
 
             """register the mqtt brocker"""
-            # client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
             client = mqtt.Client(
                 mqtt.CallbackAPIVersion.VERSION2, client_id=self.mqtt_clientname, transport="tcp", reconnect_on_failure=True, protocol=mqtt.MQTTv5
             )
@@ -542,7 +669,11 @@ class Homeconnect:
             try:
                 """connect to the device"""
                 logger.debug(f"{name} connecting to {host}")
-                ws = HCSocket(host=host, psk64=device["key"], iv64=device.get("iv", None), domain_suffix=domain_suffix, debug=debug)
+                if self.debug:
+                    logger.info(f"{name} Logging Debug enabled for HCSocket and HCDevice")
+                else:
+                    logger.success(f"{name} Logging Debug enabled for HCSocket and HCDevice")
+                ws = HCSocket(host=host, psk64=device["key"], iv64=device.get("iv", None), domain_suffix=domain_suffix, debug=self.debug)
                 self.dev[name] = HCDevice(ws=ws, device=device, resources=resources, debug=self.debug)
                 self.dev[name].run_forever(on_message=on_message, on_open=on_open, on_close=on_close)
             except Exception as e:

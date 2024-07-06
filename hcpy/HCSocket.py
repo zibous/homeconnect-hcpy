@@ -69,6 +69,12 @@ class HCSocket:
             self.port = 443
             self.uri = f"wss://{host}:443/homeconnect"
 
+        if self.debug:
+            logger.enable("hcpy.HCSocket")
+            logger.debug("Debug logger enabled")
+        else:
+            logger.disable("hcpy.HCSocket")
+
         # don't connect automatically so that debug etc can be set
         # self.reconnect()
 

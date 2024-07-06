@@ -24,6 +24,8 @@ echo "Install Docker Image ${DOCKERIMAGE}..."
 docker run -it --detach  \
            --name ${CONTAINERLABEL} \
            --volume ${PWD}/config:/app/config  \
+           --volume ${PWD}/data:/app/data  \
+           --volume ${PWD}/logs:/app/logs  \
            --env TZ=${DOCKER_TIMEZONE} \
            --restart unless-stopped \
            ${DOCKERIMAGE}

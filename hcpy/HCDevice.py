@@ -82,6 +82,11 @@ class HCDevice:
         self.token = None
         self.resources = resources
         self.connected = False
+        if self.debug:
+            logger.enable("hcpy.HCDevice")
+            logger.debug("Debug logger enabled")
+        else:
+            logger.disable("hcpy.HCDevice")
 
     def parse_values(self, values):
         if not self.features:
