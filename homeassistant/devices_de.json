@@ -11,7 +11,6 @@
             "version": "3",
             "revision": "1"
         },
-        "_comment_resources":"Optional used by HCDevice.py to avoid 400/404 Errors",
         "resources": {
             "/ci/services": true,
             "/ci/authentication": false,
@@ -26,13 +25,24 @@
             "/ro/values": false,
             "/ro/allDescriptionChanges": true
         },
-        "_comment_addons":"Optional for payload decice to add watermeter, powemeteer, tabs",
         "addons": {
             "installed": "2022-09-06 12:00:00",
-            "powermeter": "http://sonoff-dishwasher.siebler.home/cm?cmnd=status+8",
-            "watermeter": "http://water-meter-esp.local/sensor/wasseruhr_anzeige",
+            "powermeter": "http://10.1.1.118/cm?cmnd=status+8",
+            "watermeter": "http://10.1.1.73/sensor/wasseruhr_anzeige",
             "taps": 20,
-            "taps_min": 5
+            "taps_min": 5,
+            "logfields": [
+                "DishwasherTimestamp",
+                "PowerState",
+                "OperationState",
+                "ProgramPhase",
+                "taskstate",
+                "ProgramFinished",
+                "RemainingProgramTime",
+                "Started",
+                "energy_used",
+                "water_used"
+            ]
         },
         "features": {
             "512": {
@@ -112,9 +122,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "46": {
@@ -124,9 +134,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Ausgeschaltet",
+                    "1": "Ausgeschaltet",
+                    "2": "Bestätigt"
                 }
             },
             "577": {
@@ -136,9 +146,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Ausgeschaltet",
+                    "1": "Aktiviert",
+                    "2": "Bestätigt"
                 }
             },
             "543": {
@@ -148,9 +158,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "545": {
@@ -160,9 +170,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "540": {
@@ -172,9 +182,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "593": {
@@ -184,9 +194,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "21": {
@@ -196,9 +206,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "595": {
@@ -208,9 +218,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "32773": {
@@ -278,8 +288,8 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Program"
+                    "0": "Aus",
+                    "1": "Programm"
                 }
             },
             "32825": {
@@ -307,8 +317,8 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "1": "Off",
-                    "2": "On"
+                    "1": "Aus",
+                    "2": "Ein"
                 }
             },
             "15": {
@@ -318,9 +328,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Monitoring",
-                    "1": "ManualRemoteStart",
-                    "2": "PermanentRemoteStart"
+                    "0": "Überwacht",
+                    "1": "Fernstart Manuell",
+                    "2": "Fernstart Remote"
                 }
             },
             "5": {
@@ -337,8 +347,8 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Open",
-                    "1": "Closed"
+                    "0": "Geöffnet",
+                    "1": "Geschlossen"
                 }
             },
             "614": {
@@ -355,8 +365,8 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "AsList",
-                    "1": "AsButtons"
+                    "0": "Liste",
+                    "1": "Schalter"
                 }
             },
             "552": {
@@ -366,15 +376,15 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Inactive",
-                    "1": "Ready",
-                    "2": "DelayedStart",
-                    "3": "Run",
+                    "0": "Inaktiv",
+                    "1": "Bereit",
+                    "2": "Start verzögert",
+                    "3": "Läuft",
                     "4": "Pause",
-                    "5": "ActionRequired",
-                    "6": "Finished",
-                    "7": "Error",
-                    "8": "Aborting"
+                    "5": "Eingabe erforderlich",
+                    "6": "Beendet",
+                    "7": "Fehler",
+                    "8": "Abbruch"
                 }
             },
             "615": {
@@ -412,9 +422,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4611": {
@@ -424,9 +434,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4610": {
@@ -436,9 +446,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4608": {
@@ -448,9 +458,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4613": {
@@ -460,9 +470,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4655": {
@@ -472,9 +482,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4628": {
@@ -484,9 +494,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4625": {
@@ -496,9 +506,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4627": {
@@ -508,9 +518,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4624": {
@@ -520,9 +530,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4626": {
@@ -532,9 +542,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "4612": {
@@ -544,9 +554,9 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Present",
-                    "2": "Confirmed"
+                    "0": "Nein",
+                    "1": "Ja",
+                    "2": "Bestätigt"
                 }
             },
             "5121": {
@@ -589,8 +599,8 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "LastProgram",
-                    "1": "EcoAsDefault"
+                    "0": "Letztes Programm",
+                    "1": "Eco Voreinstellung"
                 }
             },
             "4356": {
@@ -607,8 +617,8 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "ColdWater",
-                    "1": "HotWater"
+                    "0": "Nein",
+                    "1": "Ja"
                 }
             },
             "4378": {
@@ -625,7 +635,7 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
+                    "0": "Aus",
                     "1": "R01",
                     "2": "R02",
                     "3": "R03",
@@ -643,7 +653,7 @@
                 "values": {
                     "0": "Standard",
                     "1": "Sensitive",
-                    "2": "VerySensitive"
+                    "2": "Sensitive plus"
                 }
             },
             "4382": {
@@ -663,10 +673,10 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Off",
-                    "1": "Low",
-                    "2": "Medium",
-                    "3": "High"
+                    "0": "Ausgeschaltet",
+                    "1": "Leise",
+                    "2": "Normal",
+                    "3": "Laut"
                 }
             },
             "4384": {
@@ -683,14 +693,14 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "H00",
-                    "1": "H01",
-                    "2": "H02",
-                    "3": "H03",
-                    "4": "H04",
-                    "5": "H05",
-                    "6": "H06",
-                    "7": "H07"
+                    "0": "H00-weich",
+                    "1": "H01-weich",
+                    "2": "H02-mittel",
+                    "3": "H03-mittel",
+                    "4": "H04-mittel",
+                    "5": "H05-hart",
+                    "6": "H06-hart",
+                    "7": "H07-hart"
                 }
             },
             "4096": {
@@ -700,11 +710,11 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "None",
-                    "1": "PreRinse",
-                    "2": "MainWash",
-                    "3": "FinalRinse",
-                    "4": "Drying"
+                    "0": "Keine",
+                    "1": "Vorspülen",
+                    "2": "Hauptspülen",
+                    "3": "Endspülen",
+                    "4": "Trocknen"
                 }
             },
             "4101": {
@@ -719,6 +729,24 @@
             },
             "8199": {
                 "name": "Dishcare.Dishwasher.Program.Quick45"
+            },
+            "520": {
+                "name": "BSH.Common.Option.DishwasherTimestamp"
+            },
+            "535": {
+                "name": "BSH.Common.Option.DishwasherCode535"
+            },
+            "547": {
+                "name": "BSH.Common.Option.DishwasherCode547"
+            },
+            "4632": {
+                "name": "BSH.Common.Option.DishwasherCode4632"
+            },
+            "4641": {
+                "name": "BSH.Common.Option.DishwasherCode4641"
+            },
+            "4654": {
+                "name": "BSH.Common.Option.DishwasherCode4654"
             }
         }
     }
