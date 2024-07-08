@@ -16,5 +16,7 @@
     "tzinfo": "Europe/Vaduz",
     "LOGLEVEL": "INFO",
     "hc_username": "<redakted>",
-    "hc_password": "<redakted>"
+    "hc_password": "<redakted>",
+    "timeHealthCheck": 15,
+    "timereconnect": 1200
 }

@@ -1,0 +1,230 @@
+device_dishwasher_haertbeatt_pack:
+  mqtt:
+    - sensor:
+        - name: "Homeconnest Status"
+          unique_id: "homeconnect_lwt"
+          icon: mdi:state-machine
+          state_topic: "homeconnect/LWT"
+          device:
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+            name: "Homeconnect HealthCheck"
+            manufacturer: "Docker app"
+            model: "Homeconnect"
+            serial_number: "202407071515"
+            sw_version: "1.1.4"
+            via_device: "BOSCH-SMV4HCX48E-24"
+            suggested_area: Küche
+
+        - name: "Geschirrspüler Status"
+          unique_id: "dishwasher_lwt"
+          icon: mdi:state-machine
+          state_topic: "homeconnect/dishwasher/LWT"
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+
+        - name: "Geschirrspüler Betrieb"
+          unique_id: "dishwasher_taskstate"
+          icon: mdi:state-machine
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.taskstate|default('idle')}}"
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+
+        - name: "Verbindung neu"
+          unique_id: "dishwasher_reconnect"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.reconnect|default('--')}}"
+          icon: mdi:clipboard-text-clock-outline
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+          json_attributes_topic: "homeconnect/dishwasher/healthscheck"
+
+        - name: "Verbindungszeit"
+          unique_id: "dishwasher_ping"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.ping|default(int(0))}}"
+          unit_of_measurement: s
+          device_class: duration
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Add Ons"
+          unique_id: "dishwasher_addons"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.addons|default(int(0))}}"
+          icon: "mdi:timetable"
+          state_class: measurement
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Service Filter"
+          unique_id: "dishwasher_resfilter"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.resfilter|default('--')}}"
+          icon: "mdi:timetable"
+          state_class: measurement
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Intervall Reconnect"
+          unique_id: "dishwasher_redelayk"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.redelay|default(int(0))}}"
+          state_class: measurement
+          unit_of_measurement: s
+          device_class: duration
+          icon: mdi:run
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        # diagnostic
+        - name: "Daten aktualisiert"
+          unique_id: "dishwasher_lastmodified"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.lastmodified|default('--')}}"
+          icon: "mdi:timetable"
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Laufzeit"
+          unique_id: "dishwasher_elapsed"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.elapsed|default(float(0))}}"
+          icon: "mdi:timetable"
+          state_class: measurement
+          unit_of_measurement: s
+          device_class: duration
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Protokollierung"
+          unique_id: "dishwasher_loglevel"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.loglevel|default('Keine')}}"
+          icon: "mdi:timetable"
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Zeitstempel"
+          unique_id: "dishwasher_timestamp"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.timestamp|default('--')}}"
+          icon: "mdi:dishwasher"
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Health Checks"
+          unique_id: "dishwasher_counter"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.counter|default(int(0))}}"
+          state_class: measurement
+          icon: mdi:run
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Intervall Health Checks"
+          unique_id: "dishwasher_timeHealthCheck"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.timeHealthCheck|default(int(0))}}"
+          state_class: measurement
+          unit_of_measurement: s
+          device_class: duration
+          icon: mdi:run
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Intervall Reconnect"
+          unique_id: "dishwasher_timereconnect"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.timereconnect|default(float(0))}}"
+          icon: "mdi:timetable"
+          state_class: measurement
+          unit_of_measurement: s
+          device_class: duration
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+
+        - name: "Geräte"
+          unique_id: "dishwasher_devices"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.devices|default(int(0))}}"
+          state_class: measurement
+          icon: mdi:run
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Hostname"
+          unique_id: "dishwasher_hostname"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.hostname|default('unbekannt')}}"
+          icon: mdi:desktop-classic
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all

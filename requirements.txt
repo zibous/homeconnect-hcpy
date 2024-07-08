@@ -4,9 +4,11 @@ click==8.1.6
 click_config_file==0.6.0
 loguru==0.7.2
 paho_mqtt==2.1.0
+ping3==4.0.8
 pycryptodome==3.20.0
 pydot==2.0.0
 python_dateutil==2.8.2
 Requests==2.32.3
+schedule==1.2.2
 sslpsk==1.0.0
 websocket_client==1.7.0

@@ -392,6 +392,8 @@ class HCDevice:
         elif action == "RESPONSE" or action == "NOTIFY":
 
             if resource == "/iz/info" or resource == "/ci/info":
+                # /iz/info get the device informations (deviceid, brand, serialnumber...)
+
                 if "data" in msg and len(msg["data"]) > 0:
                     # Return Device Information such as Serial Number, SW Versions, MAC Address
                     values = msg["data"][0]
@@ -419,8 +421,8 @@ class HCDevice:
                                 self.features[uid] = change
 
             elif resource == "/ni/info":
+                # Return Network Information/IP Address etc
                 if "data" in msg and len(msg["data"]) > 0:
-                    # Return Network Information/IP Address etc
                     values = msg["data"][0]
                     values["wslink"] = resource
 
@@ -430,6 +432,8 @@ class HCDevice:
                 pass
 
             elif resource == "/ro/allMandatoryValues" or resource == "/ro/values":
+                # /ro/values event data for device
+                # {"DoorState": "Geschlossen", "wslink": "/ro/values"}
                 if "data" in msg:
                     values = self.parse_values(msg["data"])
                     values["wslink"] = resource

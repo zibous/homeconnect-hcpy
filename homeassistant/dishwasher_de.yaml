@@ -5,12 +5,12 @@ device_dishwasher_pack:
           unique_id: "dishwasher_powerstate"
           icon: mdi:dishwasher
           state_topic: "homeconnect/dishwasher/state"
-          state_off: "Off"
-          state_on: "On"
+          state_off: "Aus"
+          state_on: "Ein"
           payload_on: '[{"uid":539,"value":2}]'
           payload_off: '[{"uid":539,"value":1}]'
           command_topic: "homeconnect/dishwasher/set"
-          value_template: "{{value_json.PowerState|default('Off')}}"
+          value_template: "{{value_json.PowerState|default('Aus')}}"
           device:
             identifiers: "BOSCH-SMV4HCX48E-24"
             name: "Bosch Geschirrspüler"
@@ -53,7 +53,7 @@ device_dishwasher_pack:
             identifiers: "BOSCH-SMV4HCX48E-24"
           availability:
             - topic: "homeconnect/dishwasher/state"
-              value_template: "{{'offline' if value_json.OperationState == 'Ready' else 'online'}}"
+              value_template: "{{'offline' if value_json.OperationState == 'Bereit' else 'online'}}"
 
         - name: "Neu Laden"
           unique_id: "dishwasher_refresh"
@@ -96,16 +96,16 @@ device_dishwasher_pack:
           retain: true
           command_topic: "homeconnect/dishwasher/set"
           command_template: >
-            {% if value == "LastProgram" %}
+            {% if value == "Letztes Programm" %}
               [{"uid":4363,"value":0}]
-            {% elif value == "EcoAsDefault" %}
+            {% elif value == "Eco Voreinstellung" %}
               [{"uid":4363,"value":1}]
             {% endif %}
           state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.EcoAsDefault|default('LastProgram')}}"
+          value_template: "{{value_json.EcoAsDefault|default('Letztes Programm')}}"
           options:
-            - "LastProgram"
-            - "EcoAsDefault"
+            - "Letztes Programm"
+            - "Eco Voreinstellung"
           device:
             name: "Bosch Geschirrspüler"
             identifiers: "BOSCH-SMV4HCX48E-24"
@@ -113,14 +113,14 @@ device_dishwasher_pack:
             - topic: "homeconnect/dishwasher/LWT"
           availability_mode: all
 
-        - name: "Klarspülen"
+        - name: "Klarspülen Eintellung"
           unique_id: "dishwasher_rinseaid"
           icon: mdi:cog
           entity_category: config
           retain: true
           command_topic: "homeconnect/dishwasher/set"
           command_template: >
-            {% if value == "Off" %}
+            {% if value == "Aus" %}
               [{"uid":4354,"value":0}]
             {% elif value == "R01" %}
               [{"uid":4354,"value":1}]
@@ -136,9 +136,9 @@ device_dishwasher_pack:
               [{"uid":4354,"value":6}]
             {% endif %}
           state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.RinseAid|default('Off')}}"
+          value_template: "{{value_json.RinseAid|default('Aus')}}"
           options:
-            - "Off"
+            - "Aus"
             - "R01"
             - "R02"
             - "R03"
@@ -163,7 +163,7 @@ device_dishwasher_pack:
               [{"uid":4355,"value":0}]
             {% elif value == "Sensitive" %}
               [{"uid":4355,"value":1}]
-            {% elif value == "VerySensitive" %}
+            {% elif value == "Sensitive plus" %}
               [{"uid":4355,"value":2}]
             {% endif %}
           state_topic: "homeconnect/dishwasher/state"
@@ -171,7 +171,7 @@ device_dishwasher_pack:
           options:
             - "Standard"
             - "Sensitive"
-            - "VerySensitive"
+            - "Sensitive plus"
           device:
             name: "Bosch Geschirrspüler"
             identifiers: "BOSCH-SMV4HCX48E-24"
@@ -195,34 +195,34 @@ device_dishwasher_pack:
           retain: true
           command_topic: "homeconnect/dishwasher/set"
           command_template: >
-            {% if value == "H00" %}
+            {% if value == "H00-weich" %}
               [{"uid":4367,"value":0}]
-            {% elif value == "H01" %}
+            {% elif value == "H01-weich" %}
               [{"uid":4367,"value":1}]
-            {% elif value == "H02" %}
+            {% elif value == "H02-mittel" %}
               [{"uid":4367,"value":2}]
-            {% elif value == "H03" %}
+            {% elif value == "H03-mittel" %}
               [{"uid":4367,"value":3}]
-            {% elif value == "H04" %}
+            {% elif value == "H04-mittel" %}
               [{"uid":4367,"value":4}]
-            {% elif value == "H05" %}
+            {% elif value == "H05-hart" %}
               [{"uid":4367,"value":5}]
-            {% elif value == "H06" %}
+            {% elif value == "H06-hart" %}
               [{"uid":4367,"value":6}]
-            {% elif value == "H07" %}
+            {% elif value == "H07-hart" %}
               [{"uid":4367,"value":7}]
             {% endif %}
           state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.WaterHardness|default('H00')}}"
+          value_template: "{{value_json.WaterHardness|default('H00-weich')}}"
           options:
-            - "H00"
-            - "H01 "
-            - "H02"
-            - "H03"
-            - "H04"
-            - "H05"
-            - "H06"
-            - "H07"
+            - "H00-weich"
+            - "H01-weich"
+            - "H02-mittel"
+            - "H03-mittel"
+            - "H04-mittel"
+            - "H05-hart"
+            - "H06-hart"
+            - "H07-hart"
           device:
             name: "Bosch Geschirrspüler"
             identifiers: "BOSCH-SMV4HCX48E-24"
@@ -231,51 +231,6 @@ device_dishwasher_pack:
           availability_mode: all
 
     - binary_sensor:
-        - name: "Fronttüre"
-          unique_id: "dishwasher_door"
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.DoorState|default('unavailable')}}"
-          payload_on: "Open"
-          payload_off: "Closed"
-          device_class: door
-          device:
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        - name: "Wasserstop"
-          unique_id: "dishwasher_AquaStopOccured"
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.AquaStopOccured|default('Off')}}"
-          payload_on: "On"
-          payload_off: "Off"
-          device:
-            name: "Bosch Geschirrspüler"
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        # ProgramFinished: "Off", "Present", "Confirmed"
-        - name: "Programm beendet"
-          unique_id: "dishwasher_ProgramFinished"
-          state_topic: "homeconnect/dishwasher/state"
-          icon: mdi:clock-end
-          value_template: >
-            {% if value in [ 'Present', 'Confirmed'] %}
-              On
-            {% else %}
-              Off
-            {% endif %}
-          payload_on: "On"
-          payload_off: "Off"
-          device:
-            name: "Bosch Geschirrspüler"
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
 
         - name: "Fernsteuerung erlaubt"
           unique_id: "dishwasher_remotecontrolstartallowed"
@@ -305,11 +260,11 @@ device_dishwasher_pack:
             - topic: "homeconnect/dishwasher/LWT"
           availability_mode: all
 
-        - name: "Spültabs bestellen"
-          unique_id: "dishwasher_ordertaps"
-          icon: mdi:cart-arrow-down
+        - name: "Halbe Ladung"
+          unique_id: "dishwasher_halfload"
+          icon: mdi:dishwasher
           state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.ordertaps|default(False)}}"
+          value_template: "{{value_json.HalfLoad|default(False)}}"
           payload_on: true
           payload_off: false
           device:
@@ -319,151 +274,12 @@ device_dishwasher_pack:
             - topic: "homeconnect/dishwasher/LWT"
           availability_mode: all
 
-        # SoftwareUpdateAvailable:"Off","Present","Confirmed"
-        - name: "Software Update"
-          unique_id: "dishwasher_SoftwareUpdateAvailable"
-          icon: mdi:update
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.SoftwareUpdateAvailable|default('Off')}}"
-          payload_on: "On"
-          payload_off: "Off"
-          entity_category: diagnostic
-          device:
-            name: "Bosch Geschirrspüler"
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
 
-        # LowWaterPressure: "Off", "Present", "Confirmed"
-        - name: "Wasserdruck zu gering"
-          unique_id: "dishwasher_LowWaterPressure"
-          icon: mdi:water-circle
+        - name: "Spültabs bestellen"
+          unique_id: "dishwasher_ordertaps"
+          icon: mdi:cart-arrow-down
           state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.LowWaterPressure|default('Off')}}"
-          payload_on: "On"
-          payload_off: "Off"
-          entity_category: diagnostic
-          device:
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        # InternalError: "Off", "Present", "Confirmed"
-        - name: "Interner Fehler"
-          unique_id: "dishwasher_InternalError"
-          icon: mdi:dishwasher-alert
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.InternalError|default('Off')}}"
-          payload_on: "On"
-          payload_off: "Off"
-          entity_category: diagnostic
-          device:
-            name: "Bosch Geschirrspüler"
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        - name: "Filter prüfen"
-          unique_id: "dishwasher_CheckFilterSystem"
-          icon: mdi:filter-cog
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.CheckFilterSystem|default('Off')}}"
-          payload_on: "On"
-          payload_off: "Off"
-          entity_category: diagnostic
-          device:
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        # DrainingNotPossible: "Off", "Present", "Confirmed"
-        - name: "Abfluss verstopft"
-          unique_id: "dishwasher_DrainingNotPossible"
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.DrainingNotPossible|default('Off')}}"
-          icon: mdi:pipe-disconnected
-          payload_on: "On"
-          payload_off: "Off"
-          entity_category: diagnostic
-          device:
-            name: "Bosch Geschirrspüler"
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        # DrainPumpBlocked: "Off", "Present", "Confirmed"
-        - name: "Abflusspumpe defekt"
-          unique_id: "dishwasher_DrainPumpBlocked"
-          icon: mdi:pipe-valve
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.DrainPumpBlocked|default('Off')}}"
-          payload_on: "On"
-          payload_off: "Off"
-          entity_category: diagnostic
-          device:
-            name: "Bosch Geschirrspüler"
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        # SaltLack: "Off", "Present", "Confirmed"
-        - name: "Salzmangel"
-          unique_id: "dishwasher_SaltLack"
-          icon: mdi:shaker-outline
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.SaltLack|default('Off')}}"
-          payload_on: "On"
-          payload_off: "Off"
-          entity_category: diagnostic
-          device:
-            name: "Bosch Geschirrspüler"
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        # SaltLack: "Off", "Present", "Confirmed"
-        - name: "Salz nachfüllen"
-          unique_id: "dishwasher_SaltNearlyEmptyk"
-          icon: mdi:shaker-outline
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.SaltNearlyEmpty|default('Off')}}"
-          payload_on: "On"
-          payload_off: "Off"
-          entity_category: diagnostic
-          device:
-            name: "Bosch Geschirrspüler"
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        # ProgramAborted: "Off", "Present", "Confirmed"
-        - name: "Spülprogramm abgebrochen"
-          unique_id: "dishwasher_ProgramAborted"
-          icon: mdi:timer-cancel-outline
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.ProgramAborted|default('Off')}}"
-          payload_on: "On"
-          payload_off: "Off"
-          entity_category: diagnostic
-          device:
-            identifiers: "BOSCH-SMV4HCX48E-24"
-          availability:
-            - topic: "homeconnect/dishwasher/LWT"
-          availability_mode: all
-
-        - name: "Halbe Ladung"
-          unique_id: "dishwasher_halfload"
-          icon: mdi:dishwasher
-          state_topic: "homeconnect/dishwasher/state"
-          value_template: "{{value_json.HalfLoad|default(False)}}"
+          value_template: "{{value_json.ordertaps|default(False)}}"
           payload_on: true
           payload_off: false
           device:
@@ -502,7 +318,156 @@ device_dishwasher_pack:
           availability_mode: all
 
     - sensor:
-        - name: "Programm Einstellung"
+
+        - name: "Fronttüre"
+          unique_id: "dishwasher_door"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.DoorState|default('unbekannt')}}"
+          icon: 'mdi:dishwasher'
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Wasserstop"
+          unique_id: "dishwasher_AquaStopOccured"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.AquaStopOccured|default('Nein')}}"
+          device:
+            name: "Bosch Geschirrspüler"
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Programm beendet"
+          unique_id: "dishwasher_ProgramFinished"
+          state_topic: "homeconnect/dishwasher/state"
+          icon: mdi:clock-end
+          value_template: "{{value_json.ProgramFinished|default('Nein')}}"
+          device:
+            name: "Bosch Geschirrspüler"
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Software Update"
+          unique_id: "dishwasher_SoftwareUpdateAvailable"
+          icon: mdi:update
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.SoftwareUpdateAvailable|default('Nein')}}"
+          entity_category: diagnostic
+          device:
+            name: "Bosch Geschirrspüler"
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Wasserdruck zu gering"
+          unique_id: "dishwasher_LowWaterPressure"
+          icon: mdi:water-circle
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.LowWaterPressure|default('Nein')}}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Interner Fehler"
+          unique_id: "dishwasher_InternalError"
+          icon: mdi:dishwasher-alert
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.InternalError|default('Nein')}}"
+          entity_category: diagnostic
+          device:
+            name: "Bosch Geschirrspüler"
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Filter prüfen"
+          unique_id: "dishwasher_CheckFilterSystem"
+          icon: mdi:filter-cog
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.CheckFilterSystem|default('Nein')}}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Abfluss verstopft"
+          unique_id: "dishwasher_DrainingNotPossible"
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.DrainingNotPossible|default('Nein')}}"
+          icon: mdi:pipe-disconnected
+          entity_category: diagnostic
+          device:
+            name: "Bosch Geschirrspüler"
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Abflusspumpe defekt"
+          unique_id: "dishwasher_DrainPumpBlocked"
+          icon: mdi:pipe-valve
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.DrainPumpBlocked|default('Nein')}}"
+          entity_category: diagnostic
+          device:
+            name: "Bosch Geschirrspüler"
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Salzmangel"
+          unique_id: "dishwasher_SaltLack"
+          icon: mdi:shaker-outline
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.SaltLack|default('Nein')}}"
+          entity_category: diagnostic
+          device:
+            name: "Bosch Geschirrspüler"
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Salz nachfüllen"
+          unique_id: "dishwasher_SaltNearlyEmpty"
+          icon: mdi:shaker-outline
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.SaltNearlyEmpty|default('Nein')}}"
+          entity_category: diagnostic
+          device:
+            name: "Bosch Geschirrspüler"
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Spülprogramm abgebrochen"
+          unique_id: "dishwasher_ProgramAborted"
+          icon: mdi:timer-cancel-outline
+          state_topic: "homeconnect/dishwasher/state"
+          value_template: "{{value_json.ProgramAborted|default('Nein')}}"
+          entity_category: diagnostic
+          device:
+            identifiers: "BOSCH-SMV4HCX48E-24"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Spülprogramm aktuell"
           unique_id: "dishwasher_activeprogram"
           icon: mdi:dishwasher
           state_topic: "homeconnect/dishwasher/state"
@@ -516,7 +481,7 @@ device_dishwasher_pack:
             - topic: "homeconnect/dishwasher/LWT"
           availability_mode: all
 
-        - name: "Spülprogramm"
+        - name: "Spülprogramm gewählt"
           unique_id: "dishwasher_selectedprogram"
           icon: mdi:dishwasher
           state_topic: "homeconnect/dishwasher/state"
@@ -530,14 +495,11 @@ device_dishwasher_pack:
             - topic: "homeconnect/dishwasher/LWT"
           availability_mode: all
 
-        # ProgramPhase: "None", "PreRinse", "MainWash", "FinalRinse","Drying"
         - name: "Spülprogramm Phase"
           unique_id: "dishwasher_programphase"
           icon: mdi:gauge-full
           state_topic: "homeconnect/dishwasher/state"
-          value_template: >
-            {% set tskstate= '{ "None":"Keine", "PreRinse":"Vorspülen", "MainWash":"Hauptspülen", "FinalRinse":"Endspülen","Drying":"Trocknen" }'| from_json %}
-            {{tskstate[value_json.taskstate|string]|default("Keine")}}
+          value_template: "{{value_json.ProgramPhase|default('Keine')}}"
           device:
             name: "Bosch Geschirrspüler"
             identifiers: "BOSCH-SMV4HCX48E-24"

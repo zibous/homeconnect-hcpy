@@ -16,6 +16,7 @@
 import os
 import sys
 
+
 dirname, filename = os.path.split(os.path.abspath(__file__))
 __APPLICATION_NAME__ = os.path.basename(dirname)
 __author__ = "Peter Siebler"
@@ -30,9 +31,12 @@ from base64 import urlsafe_b64encode as base64url_encode
 from Crypto.Random import get_random_bytes
 from dateutil.parser import *
 from datetime import datetime
-import arrow
 import shutil
 
+import arrow
+import schedule
+import threading
+from ping3 import ping
 import paho.mqtt.client as mqtt
 from paho.mqtt.properties import Properties
 from paho.mqtt.packettypes import PacketTypes
@@ -46,11 +50,13 @@ from hcpy.HCDevice import HCDevice
 
 ## all for logging
 from loguru import logger
-‚
+
 ## init logger
 logger = logger.patch(lambda record: record.update(name=record["file"].name))
 logger = logger.opt(colors=False)
 min_level = "INFO"
+
+
 def setlogLevel(min_level: str = min_level):
     """set the log level for the current logger:
     ### Args:
@@ -64,12 +70,78 @@ def setlogLevel(min_level: str = min_level):
         ERROR:    40
         CRITICAL: 50
     """
+
     def my_filter(record):
         return record["level"].no >= logger.level(min_level).no
 
     logger.remove()
     logger.add(sys.stderr, filter=my_filter)
-    setlogLevel(min_level)
+
+
+class HealthCheckMessage:
+    """Device HealthCheck Message"""
+
+    start = time.time()
+    device: str = "unkown"
+    timestamp: str = now()
+    counter: int = 0
+    state: str = "Offline"
+    lastmodified: str = "--"
+    elapsed: int = 0
+    reconnect: str = "--"
+    taskstate: str = "idle"
+    ping: float = 0
+    redelay: int = 0
+    timereconnect: int = 0
+    timeHealthCheck: int = 0
+    addons: int = 0
+    resfilter: int = 0
+    loglevel: str = min_level
+    pythonvers = sys.version
+
+    def __init__(self, name: str = None):
+        self.device = name
+        self.start = time.time()
+        self.timestamp = now()
+
+    def __update__(self):
+        """update the HealthCheck"""
+        self.timestamp = now()
+        self.counter += 1
+        self.state = "Online"
+        self.elapsed = round(time.time() - self.start, 0)
+
+    def getPayload(self) -> str:
+        """get the payload"""
+        self.__update__()
+        _data = self.__dict__.copy()
+        _data.pop("start")
+        return json.dumps(_data, ensure_ascii=True)
+
+
+def schedule_loop_continuous(interval=1):
+    """Continuously run, while executing pending jobs at each
+    elapsed time interval.
+    @return cease_continuous_run: threading. Event which can
+    be set to cease continuous run. Please note that it is
+    *intended behavior that schedule_loop_continuous() does not run
+    missed jobs*. For example, if you've registered a job that
+    should run every minute and you set a continuous run
+    interval of one hour then your job won't be run 60 times
+    at each interval but only once.
+    """
+    cease_continuous_run = threading.Event()
+
+    class ScheduleThread(threading.Thread):
+        @classmethod
+        def run(cls):
+            while not cease_continuous_run.is_set():
+                schedule.run_pending()
+                time.sleep(interval)
+
+    continuous_thread = ScheduleThread()
+    continuous_thread.start()
+    return cease_continuous_run
 
 
 class Homeconnect:
@@ -94,10 +166,14 @@ class Homeconnect:
     LOGLEVEL: str = "WARNING"
     hc_username: str = None
     hc_password: str = None
+    timeHealthCheck: int = 0
+    timereconnect: int = 0
 
     # device dict
     dev = {}
+    hearBeatMessage = {}
     addons = {}
+    resfilter: int = 0
 
     # simple state machine
     state: str = "off"
@@ -108,6 +184,7 @@ class Homeconnect:
     waterdisplay: float = 0.000
     logdir: str = None
     payloadDir: str = None
+    lastPayload = None
 
     def __init__(self, config_file: str = "./config/config.json"):
         """home connect class
@@ -146,9 +223,13 @@ class Homeconnect:
             if os.path.isfile(self.config_file):
                 with open(self.config_file, "r", encoding="utf8") as f:
                     param = json.load(f)
+
                 for key, value in param.items():
                     setattr(self, key, value)
+
+                logger.info(f"Set Debug level to {self.LOGLEVEL}")
                 setlogLevel(self.LOGLEVEL)
+
                 self.devices_file = os.path.abspath(self.devices_file)
                 logger.success(f"Application config file{self.config_file} found.")
             else:
@@ -305,13 +386,14 @@ class Homeconnect:
 
         return states
 
-    def __saveLog__(self, states: dict = None, fields:list=None):
+    def __saveLog__(self, states: dict = None, fields: list = None):
         """## save states log if states present and log dir enabled
 
         ### Args:
             - `states (dict, optional)`: device states. Defaults to None.
             - `fields (list, optional)`: filter fields for log. Defaults to None.
         """
+
         def my_filtering_function(pair):
             key, value = pair
             if key in fields:
@@ -351,8 +433,17 @@ class Homeconnect:
 
                 logger.debug(f"Resource - Websocket Link: {states.get('wslink', 'unkown')}")
 
+                if self.LOGLEVEL == "DEBUG" and states.get("wslink", None):
+                    _topic = f"{self.mqtt_prefix}{name}/states{states['wslink']}"
+                    logger.info(f"{name} publish state data {topic}")
+                    _result = client.publish(topic=_topic, payload=json.dumps(states, ensure_ascii=True), retain=False)
+                    time.sleep(1)
+
                 states["lastupdate"] = now()
                 states["Name"] = name
+
+                if self.timeHealthCheck and self.hearBeatMessage and self.hearBeatMessage.get(name, None):
+                    self.hearBeatMessage[name].lastmodified = now()
 
                 _addOns = self.addons.get(name, None)
                 if _addOns.get("installed", None):
@@ -367,7 +458,7 @@ class Homeconnect:
 
                     # get the current status for the dishwasher
                     logger.debug(f"Powerstate: {states.get('PowerState', 'Off')}, ProgramProgress:{states.get('ProgramProgress', 1)}")
-                    _dws = states.get( int(states.get("ProgramProgress", 0)) > 0)
+                    _dws = states.get(int(states.get("ProgramProgress", 0)) > 0)
                     _dws = self.status(_dws)
 
                     if self.status(_dws) == 1:
@@ -384,6 +475,7 @@ class Homeconnect:
 
                     _tasktext = ["idle", "started", "ending"]
                     states["taskstate"] = _tasktext[self.status(_dws)]
+                    self.hearBeatMessage[name].taskstate = states["taskstate"]
 
                     if _addOns:
                         _powermeter = _addOns.get("powermeter", None)
@@ -459,21 +551,23 @@ class Homeconnect:
                     states["attribution"] = "Data provided by docker application {}".format(os.uname().nodename)
 
                 ## build the payload
+                logger.info("Build states payload")
                 payload = self.__buildPayload__(states=states)
                 if not payload:
                     logger.critical("No payload (states) found!, no publish to MQTT Brocker !")
                     return False
 
                 self.__saveLog__(states=payload, fields=_addOns.get("logfields", None))
-                payload = json.dumps(payload, ensure_ascii=True)
 
                 ## publish the new state
                 logger.info(f"{name} publish state data {states.get('wslink', 'unkown')} to {topic}")
-                _result = client.publish(topic=f"{topic}", payload=payload, retain=True)
+                payload = json.dumps(payload, ensure_ascii=True)
+                _result = client.publish(topic=topic, payload=payload, retain=True)
                 _status = _result[0]
 
                 if _status == 0:
                     logger.success(f"{name} ↠ {states.get('wslink', 'unkown')} publish send {topic} valid and finished")
+                    self.lastPayload = time.time()
                 else:
                     logger.critical(f"{name} publish failed {topic}, {payload}")
                 return True
@@ -482,6 +576,50 @@ class Homeconnect:
             logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
 
         return False
+
+    def __sendHealthCheckMessage__(self, client):
+        """send the HealthCheck message for each device"""
+        try:
+            if client and self.dev and self.hearBeatMessage:
+                for name in self.hearBeatMessage:
+                    if self.dev[name].ws.host:
+                        self.hearBeatMessage[name].ping = ping(self.dev[name].ws.host)
+                    ## Additional HealthCheck info
+                    self.hearBeatMessage[name].hostname = os.uname().nodename
+                    self.hearBeatMessage[name].devices = len(self.dev)
+                    self.hearBeatMessage[name].redelay = int(time.time() - self.lastPayload)
+                    self.hearBeatMessage[name].timereconnect = self.timereconnect
+                    self.hearBeatMessage[name].timeHealthCheck = self.timeHealthCheck
+                    if self.addons.get(name, None):
+                        self.hearBeatMessage[name].addons = len(self.addons[name])
+                    self.hearBeatMessage[name].resfilter = self.resfilter
+                    self.hearBeatMessage[name].loglevel = self.LOGLEVEL
+                    ## publish the HealthCheck
+                    _topic = f"{self.mqtt_prefix}{name}/healthscheck"
+                    _payload = self.hearBeatMessage[name].getPayload()
+                    if _payload:
+                        client.publish(topic=f"{_topic}", payload=_payload, retain=True)
+                    time.sleep(1)
+            else:
+                logger.critical("No HealthCheck message sendet, missing data")
+        except Exception as e:
+            logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
+
+    def __deviceReconnect__(self):
+        """device(s) reconnect"""
+        try:
+            logger.debug(f"check timeslot: {int((time.time() - self.lastPayload))} > {self.timereconnect}")
+            if (int(time.time() - self.lastPayload)) > self.timereconnect:
+                for name in self.dev:
+                    logger.debug(f"Reconnect Device: {name}")
+                    if self.timeHealthCheck and self.hearBeatMessage and self.hearBeatMessage.get(name, None):
+                        self.hearBeatMessage[name].reconnect = now()
+                    self.dev[name].reconnect()
+            else:
+                logger.debug("Reconnect Message skipped.")
+
+        except Exception as e:
+            logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
 
     def run(self):
         """home connect mqtt hc2mqtt"""
@@ -605,10 +743,28 @@ class Homeconnect:
                 _resources = {}
                 if device.__contains__("resources"):
                     _resources = device["resources"]
+                self.resfilter = len(_resources)
 
                 mqtt_topic = self.mqtt_prefix + _name
                 thread = Thread(target=self.client_connect, args=(client, device, mqtt_topic, self.domain_suffix, _resources, self.debug))
                 thread.start()
+
+                # send HealthCheck message time see condig.json
+                if self.timeHealthCheck:
+                    logger.info(f"HealthCheck message enabled for {self.timeHealthCheck} seconds.")
+                    self.hearBeatMessage[_name] = HealthCheckMessage(name=_name)
+                    schedule.every(interval=int(self.timeHealthCheck)).seconds.do(self.__sendHealthCheckMessage__, client=client)
+                else:
+                    logger.debug("HealthCheck message disabled")
+
+                # send refresh time see condig.json
+                if self.timereconnect:
+                    logger.info(f"Reconnect message enabled for {self.timereconnect} seconds.")
+                    schedule.every(interval=int(self.timereconnect)).seconds.do(self.__deviceReconnect__)
+                else:
+                    logger.debug("Reconnect message disabled")
+
+                schedule_loop_continuous()
 
             client.loop_forever()
 
@@ -676,6 +832,8 @@ class Homeconnect:
                 ws = HCSocket(host=host, psk64=device["key"], iv64=device.get("iv", None), domain_suffix=domain_suffix, debug=self.debug)
                 self.dev[name] = HCDevice(ws=ws, device=device, resources=resources, debug=self.debug)
                 self.dev[name].run_forever(on_message=on_message, on_open=on_open, on_close=on_close)
+                self.__sendHealthCheckMessage__(client=client)
+
             except Exception as e:
                 logger.warning(f"{device['name']}, ERROR  {str(e)}, line {sys.exc_info()[-1].tb_lineno}, Offline")
                 client.publish(topic=f"{mqtt_topic}/LWT", payload="offline", retain=True)
