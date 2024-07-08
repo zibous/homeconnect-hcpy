@@ -603,7 +603,9 @@ class Homeconnect:
                 for name in self.hearBeatMessage:
                     self.__deviceReconnect__(logEnabled=False)
                     if self.dev[name].ws.host:
-                        self.hearBeatMessage[name].ping = ping(self.dev[name].ws.host, unit='ms')
+                        _ping = ping(self.dev[name].ws.host, unit='ms')
+                        if isinstance(_ping, float):
+                            self.hearBeatMessage[name].ping = round(_ping,2)
                     ## Additional HealthCheck info
                     self.hearBeatMessage[name].hostname = os.uname().nodename
                     self.hearBeatMessage[name].devices = len(self.dev)
