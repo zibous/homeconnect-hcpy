@@ -49,7 +49,7 @@ device_dishwasher_haertbeatt_pack:
           unique_id: "dishwasher_ping"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.ping|default(int(0))}}"
-          unit_of_measurement: s
+          unit_of_measurement: ms
           device_class: duration
           device:
             name: "Homeconnect HealthCheck"
@@ -220,6 +220,19 @@ device_dishwasher_haertbeatt_pack:
           unique_id: "dishwasher_hostname"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.hostname|default('unbekannt')}}"
+          icon: mdi:desktop-classic
+          entity_category: diagnostic
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Python Version"
+          unique_id: "dishwasher_pythonvers"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.pythonvers|default('unbekannt')}}"
           icon: mdi:desktop-classic
           entity_category: diagnostic
           device:

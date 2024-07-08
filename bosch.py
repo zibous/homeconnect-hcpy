@@ -20,7 +20,7 @@ import sys
 dirname, filename = os.path.split(os.path.abspath(__file__))
 __APPLICATION_NAME__ = os.path.basename(dirname)
 __author__ = "Peter Siebler"
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 __license__ = "MIT"
 
 import json
@@ -100,9 +100,22 @@ class HealthCheckMessage:
     pythonvers = sys.version
 
     def __init__(self, name: str = None):
-        self.device = name
-        self.start = time.time()
-        self.timestamp = now()
+        self.device:str = name
+        self.timestamp:str = now()
+        self.counter:int = 0
+        self.state:str = "Offline"
+        self.lastmodified: str = "--"
+        self.elapsed: int = 0
+        self.reconnect: str = "--"
+        self.taskstate: str = "idle"
+        self.ping: float = 0
+        self.redelay: int = 0
+        self.timereconnect: int = 0
+        self.timeHealthCheck: int = 0
+        self.addons: int = 0
+        self.resfilter: int = 0
+        self.loglevel: str = min_level
+        self.pythonvers = sys.version
 
     def __update__(self):
         """update the HealthCheck"""
@@ -114,8 +127,10 @@ class HealthCheckMessage:
     def getPayload(self) -> str:
         """get the payload"""
         self.__update__()
-        _data = self.__dict__.copy()
-        _data.pop("start")
+        _data = self.__dict__
+        if _data.__contains__("start"):
+           _data = self.__dict__.copy()
+           _data.pop("start")
         return json.dumps(_data, ensure_ascii=True)
 
 
@@ -429,6 +444,7 @@ class Homeconnect:
     def onStateChanged(self, client, name: str, topic: str, states: dict) -> bool:
         """simple callback state payload from client add additional data (energy, water)"""
         try:
+
             if topic and states:
 
                 logger.debug(f"Resource - Websocket Link: {states.get('wslink', 'unkown')}")
@@ -580,10 +596,14 @@ class Homeconnect:
     def __sendHealthCheckMessage__(self, client):
         """send the HealthCheck message for each device"""
         try:
+            if not self.timeHealthCheck:
+               # disabled: skip
+               return
             if client and self.dev and self.hearBeatMessage:
                 for name in self.hearBeatMessage:
+                    self.__deviceReconnect__(logEnabled=False)
                     if self.dev[name].ws.host:
-                        self.hearBeatMessage[name].ping = ping(self.dev[name].ws.host)
+                        self.hearBeatMessage[name].ping = ping(self.dev[name].ws.host, unit='ms')
                     ## Additional HealthCheck info
                     self.hearBeatMessage[name].hostname = os.uname().nodename
                     self.hearBeatMessage[name].devices = len(self.dev)
@@ -605,18 +625,23 @@ class Homeconnect:
         except Exception as e:
             logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
 
-    def __deviceReconnect__(self):
+    def __deviceReconnect__(self, logEnabled:bool=True):
         """device(s) reconnect"""
         try:
-            logger.debug(f"check timeslot: {int((time.time() - self.lastPayload))} > {self.timereconnect}")
+            if not self.timereconnect:
+               # disabled: skip
+               return
             if (int(time.time() - self.lastPayload)) > self.timereconnect:
+                if logEnabled:
+                    logger.debug(f"checked timeslot: {int((time.time() - self.lastPayload))} > {self.timereconnect}")
                 for name in self.dev:
                     logger.debug(f"Reconnect Device: {name}")
                     if self.timeHealthCheck and self.hearBeatMessage and self.hearBeatMessage.get(name, None):
                         self.hearBeatMessage[name].reconnect = now()
                     self.dev[name].reconnect()
             else:
-                logger.debug("Reconnect Message skipped.")
+                if logEnabled:
+                    logger.debug("Reconnect Message skipped.")
 
         except Exception as e:
             logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")

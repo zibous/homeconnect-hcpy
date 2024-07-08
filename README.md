@@ -1,6 +1,6 @@
 # Homeconnect  - hcpy for Bosch Dishwasher
 
-![version](https://img.shields.io/badge/version-1.1.4-blue)
+![version](https://img.shields.io/badge/version-1.1.5-blue)
 ![coverage](https://img.shields.io/badge/coverage-80%25-yellowgreen)
 ![Code size](https://img.shields.io/github/languages/code-size/zibous/homeconnect-hcpy)
 [![License][license-shield]][license]
