@@ -1,8 +1,8 @@
-device_dishwasher_haertbeatt_pack:
+device_dishwasher_healthcheck_pack:
   mqtt:
     - sensor:
         - name: "Homeconnest Status"
-          unique_id: "homeconnect_lwt"
+          unique_id: "homeconnect_hc_lwt"
           icon: mdi:state-machine
           state_topic: "homeconnect/LWT"
           device:
@@ -16,7 +16,7 @@ device_dishwasher_haertbeatt_pack:
             suggested_area: Küche
 
         - name: "Geschirrspüler Status"
-          unique_id: "dishwasher_lwt"
+          unique_id: "dishwasher_hc_lwt"
           icon: mdi:state-machine
           state_topic: "homeconnect/dishwasher/LWT"
           device:
@@ -24,7 +24,7 @@ device_dishwasher_haertbeatt_pack:
             identifiers: "BOSCH-DISHWASHER_HealthCheck"
 
         - name: "Geschirrspüler Betrieb"
-          unique_id: "dishwasher_taskstate"
+          unique_id: "dishwasher_hc_taskstate"
           icon: mdi:state-machine
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.taskstate|default('idle')}}"
@@ -33,7 +33,7 @@ device_dishwasher_haertbeatt_pack:
             identifiers: "BOSCH-DISHWASHER_HealthCheck"
 
         - name: "Verbindung neu"
-          unique_id: "dishwasher_reconnect"
+          unique_id: "dishwasher_hc_reconnect"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.reconnect|default('--')}}"
           icon: mdi:clipboard-text-clock-outline
@@ -46,7 +46,7 @@ device_dishwasher_haertbeatt_pack:
           json_attributes_topic: "homeconnect/dishwasher/healthscheck"
 
         - name: "Verbindungszeit"
-          unique_id: "dishwasher_ping"
+          unique_id: "dishwasher_hc_ping"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.ping|default(int(0))}}"
           unit_of_measurement: ms
@@ -59,7 +59,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Add Ons"
-          unique_id: "dishwasher_addons"
+          unique_id: "dishwasher_hc_addons"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.addons|default(int(0))}}"
           icon: "mdi:timetable"
@@ -72,7 +72,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Service Filter"
-          unique_id: "dishwasher_resfilter"
+          unique_id: "dishwasher_hc_resfilter"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.resfilter|default('--')}}"
           icon: "mdi:timetable"
@@ -84,8 +84,32 @@ device_dishwasher_haertbeatt_pack:
             - topic: "homeconnect/dishwasher/LWT"
           availability_mode: all
 
+        - name: "Fehler am"
+          unique_id: "dishwasher_hc_errortime"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.errortime|default('--')}}"
+          icon: "mdi:timer-check-outline"
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Fehlermeldung"
+          unique_id: "dishwasher_hc_lasterror"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.lasterror|default('Keine')}}"
+          icon: "mdi:alert-circle"
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
         - name: "Intervall Reconnect"
-          unique_id: "dishwasher_redelayk"
+          unique_id: "dishwasher_hc_redelayk"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.redelay|default(int(0))}}"
           state_class: measurement
@@ -101,7 +125,7 @@ device_dishwasher_haertbeatt_pack:
 
         # diagnostic
         - name: "Daten aktualisiert"
-          unique_id: "dishwasher_lastmodified"
+          unique_id: "dishwasher_hc_lastmodified"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.lastmodified|default('--')}}"
           icon: "mdi:timetable"
@@ -114,7 +138,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Laufzeit"
-          unique_id: "dishwasher_elapsed"
+          unique_id: "dishwasher_hc_elapsed"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.elapsed|default(float(0))}}"
           icon: "mdi:timetable"
@@ -130,7 +154,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Protokollierung"
-          unique_id: "dishwasher_loglevel"
+          unique_id: "dishwasher_hc_loglevel"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.loglevel|default('Keine')}}"
           icon: "mdi:timetable"
@@ -143,7 +167,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Zeitstempel"
-          unique_id: "dishwasher_timestamp"
+          unique_id: "dishwasher_hc_timestamp"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.timestamp|default('--')}}"
           icon: "mdi:dishwasher"
@@ -156,7 +180,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Health Checks"
-          unique_id: "dishwasher_counter"
+          unique_id: "dishwasher_hc_counter"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.counter|default(int(0))}}"
           state_class: measurement
@@ -170,7 +194,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Intervall Health Checks"
-          unique_id: "dishwasher_timeHealthCheck"
+          unique_id: "dishwasher_hc_timeHealthCheck"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.timeHealthCheck|default(int(0))}}"
           state_class: measurement
@@ -186,7 +210,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Intervall Reconnect"
-          unique_id: "dishwasher_timereconnect"
+          unique_id: "dishwasher_hc_timereconnect"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.timereconnect|default(float(0))}}"
           icon: "mdi:timetable"
@@ -203,7 +227,7 @@ device_dishwasher_haertbeatt_pack:
 
 
         - name: "Geräte"
-          unique_id: "dishwasher_devices"
+          unique_id: "dishwasher_hc_devices"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.devices|default(int(0))}}"
           state_class: measurement
@@ -217,7 +241,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Hostname"
-          unique_id: "dishwasher_hostname"
+          unique_id: "dishwasher_hc_hostname"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.hostname|default('unbekannt')}}"
           icon: mdi:desktop-classic
@@ -230,7 +254,7 @@ device_dishwasher_haertbeatt_pack:
           availability_mode: all
 
         - name: "Python Version"
-          unique_id: "dishwasher_pythonvers"
+          unique_id: "dishwasher_hc_pythonvers"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.pythonvers|default('unbekannt')}}"
           icon: mdi:desktop-classic

@@ -82,6 +82,7 @@ class HCDevice:
         self.token = None
         self.resources = resources
         self.connected = False
+        self.lasterror = ""
         if self.debug:
             logger.enable("hcpy.HCDevice")
             logger.debug("Debug logger enabled")
@@ -486,6 +487,7 @@ class HCDevice:
             on_close(ws, code, message)
 
         def on_error(ws, message):
-            logger.debug(f"Websocket error: {message}")
+            self.lasterror = f"{self.ws.host}, {message}"
+            logger.critical(f"Websocket error: {self.ws.host}, {message}")
 
         self.ws.run_forever(on_message=_on_message, on_open=_on_open, on_close=_on_close, on_error=on_error)

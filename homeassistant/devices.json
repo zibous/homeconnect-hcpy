@@ -32,7 +32,19 @@
             "powermeter": "http://sonoff-dishwasher.siebler.home/cm?cmnd=status+8",
             "watermeter": "http://water-meter-esp.local/sensor/wasseruhr_anzeige",
             "taps": 20,
-            "taps_min": 5
+            "taps_min": 5,
+            "logfields": [
+                "DishwasherTimestamp",
+                "PowerState",
+                "OperationState",
+                "ProgramPhase",
+                "taskstate",
+                "ProgramFinished",
+                "RemainingProgramTime",
+                "Started",
+                "energy_used",
+                "water_used"
+            ]
         },
         "features": {
             "512": {

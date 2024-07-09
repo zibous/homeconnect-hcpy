@@ -345,7 +345,7 @@ device_dishwasher_pack:
           unique_id: "dishwasher_ProgramFinished"
           state_topic: "homeconnect/dishwasher/state"
           icon: mdi:clock-end
-          value_template: "{{value_json.ProgramFinished|default('Nein')}}"
+          value_template: "{{value_json.ProgramFinished|default('Ja')}}"
           device:
             name: "Bosch Geschirrspüler"
             identifiers: "BOSCH-SMV4HCX48E-24"
@@ -472,7 +472,7 @@ device_dishwasher_pack:
           icon: mdi:dishwasher
           state_topic: "homeconnect/dishwasher/state"
           value_template: >
-            {% set program = '{ "0":"Keines", "8195":"Auto2", "8196":"Eco50", "8197":"Glas40", "8192":"Intensiv70", "8213":"Kurz60", "8215":"MachineCare", "8202":"NightWash", "8200":"PreRinse", "8199":"Quick45"}'|from_json %}
+            {% set program = '{ "0":"Keines", "8195":"Auto 45-65°C", "8196":"Eco 50°C", "8197":"Glas 40°C", "8192":"Intensiv Plus 70°C", "8213":"Kurz 60°C", "8215":"Machinenpflege"", "8202":"NightWash", "8200":"Vorspülen", "8199":"Schnell 45°C"}'|from_json %}
             {{program[value_json.ActiveProgram|string]|default("Keines")}}
           device:
             name: "Bosch Geschirrspüler"
@@ -486,7 +486,7 @@ device_dishwasher_pack:
           icon: mdi:dishwasher
           state_topic: "homeconnect/dishwasher/state"
           value_template: >
-            {% set program = '{ "8195":"Auto2", "8196":"Eco50", "8197":"Glas40", "8192":"Intensiv70", "8213":"Kurz60", "8215":"MachineCare", "8202":"NightWash", "8200":"PreRinse", "8199":"Quick45"}'|from_json %}
+            {% set program = '{"8195":"Auto 45-65°C", "8196":"Eco 50°C", "8197":"Glas 40°C", "8192":"Intensiv Plus 70°C", "8213":"Kurz 60°C", "8215":"Machinenpflege"", "8202":"NightWash", "8200":"Vorspülen", "8199":"Schnell 45°C"}'|from_json %}
             {{program[value_json.SelectedProgram|string]|default("None")}}
           device:
             name: "Bosch Geschirrspüler"
@@ -723,7 +723,7 @@ device_dishwasher_pack:
             - topic: "homeconnect/dishwasher/LWT"
           availability_mode: all
 
-        - name: "Betrieb seit"
+        - name: "Installiert seit"
           unique_id: "dishwasher_operatingtime"
           icon: mdi:run
           state_topic: "homeconnect/dishwasher/state"

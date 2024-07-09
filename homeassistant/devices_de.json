@@ -182,8 +182,8 @@
                 "refCID": "03",
                 "refDID": "80",
                 "values": {
-                    "0": "Nein",
-                    "1": "Ja",
+                    "0": "Ja",
+                    "1": "Nein",
                     "2": "Bestätigt"
                 }
             },

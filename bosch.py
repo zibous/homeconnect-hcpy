@@ -18,7 +18,12 @@ import sys
 
 
 dirname, filename = os.path.split(os.path.abspath(__file__))
-__APPLICATION_NAME__ = os.path.basename(dirname)
+
+if os.path.basename(dirname) == "app":
+   __APPLICATION_NAME__ = f"docker.{os.uname().nodename}.app"
+else:
+   __APPLICATION_NAME__ = f"{os.path.basename(dirname)}-{os.uname().nodename}"
+
 __author__ = "Peter Siebler"
 __version__ = "1.1.5"
 __license__ = "MIT"
@@ -78,6 +83,37 @@ def setlogLevel(min_level: str = min_level):
     logger.add(sys.stderr, filter=my_filter)
 
 
+class ErrorMessage:
+    """Error Message"""
+
+    name: str = ""
+    timestamp: str = "--"
+    message: str = "None"
+    counter: int = 0
+    hostname:str=__APPLICATION_NAME__
+    tag: str = "main"
+
+    def __init__(self):
+        self.timestamp: str = "--"
+        self.message: str = "None"
+        self.counter: int = 0
+        self.tag: str = "main"
+        self.hostname = __APPLICATION_NAME__
+
+    def __update__(self):
+        """update the HealthCheck"""
+        self.timestamp = now()
+        self.counter += 1
+
+    def getPayload(self, name: str = None, message: str = None) -> str:
+        """get the payload"""
+        if name and message:
+            self.tag = name
+            self.message = message
+        self.__update__()
+        return json.dumps(self.__dict__, ensure_ascii=True)
+
+
 class HealthCheckMessage:
     """Device HealthCheck Message"""
 
@@ -96,14 +132,17 @@ class HealthCheckMessage:
     timeHealthCheck: int = 0
     addons: int = 0
     resfilter: int = 0
+    lasterror: str = ""
+    errortime: str = "--"
     loglevel: str = min_level
     pythonvers = sys.version
+    platform = sys.platform
 
     def __init__(self, name: str = None):
-        self.device:str = name
-        self.timestamp:str = now()
-        self.counter:int = 0
-        self.state:str = "Offline"
+        self.device: str = name
+        self.timestamp: str = now()
+        self.counter: int = 0
+        self.state: str = "Offline"
         self.lastmodified: str = "--"
         self.elapsed: int = 0
         self.reconnect: str = "--"
@@ -114,8 +153,12 @@ class HealthCheckMessage:
         self.timeHealthCheck: int = 0
         self.addons: int = 0
         self.resfilter: int = 0
+        self.lasterror: str = "None"
+        self.errortime: str = "--"
         self.loglevel: str = min_level
         self.pythonvers = sys.version
+        self.platform = sys.platform
+        self.hostname = __APPLICATION_NAME__
 
     def __update__(self):
         """update the HealthCheck"""
@@ -129,8 +172,8 @@ class HealthCheckMessage:
         self.__update__()
         _data = self.__dict__
         if _data.__contains__("start"):
-           _data = self.__dict__.copy()
-           _data.pop("start")
+            _data = self.__dict__.copy()
+            _data.pop("start")
         return json.dumps(_data, ensure_ascii=True)
 
 
@@ -201,10 +244,14 @@ class Homeconnect:
     payloadDir: str = None
     lastPayload = None
 
+    err_message = None
+
     def __init__(self, config_file: str = "./config/config.json"):
         """home connect class
         param str config_file homeconnect application settings
         """
+        self.err_message = ErrorMessage()
+
         self.state = "off"
         self.config_file = os.path.abspath(config_file)
 
@@ -464,7 +511,7 @@ class Homeconnect:
                 _addOns = self.addons.get(name, None)
                 if _addOns.get("installed", None):
                     states["installed"] = _addOns.get("installed", None)
-                    states["operatingtime"] = self.timeDelta(strDate=states["installed"], shortmode=False, times="y")
+                    states["operatingtime"] = self.timeDelta(strDate=states["installed"], shortmode=True, times="y")
 
                 # get the running state from the device
                 if states.__contains__("PowerState") and states.__contains__("ProgramProgress"):
@@ -559,12 +606,9 @@ class Homeconnect:
                         _tabsmin = int(_addOns.get("taps_min", 0))
                         states["ordertaps"] = (int(states.get("Started", 0)) % _tabs) < _tabsmin
 
-                states["hostname"] = "{}.{}".format(os.uname().nodename, __APPLICATION_NAME__)
+                states["hostname"] = __APPLICATION_NAME__
                 states["version"] = __version__
-
                 states["attribution"] = "Data provided by {}".format(__APPLICATION_NAME__)
-                if __APPLICATION_NAME__ == "app":
-                    states["attribution"] = "Data provided by docker application {}".format(os.uname().nodename)
 
                 ## build the payload
                 logger.info("Build states payload")
@@ -573,7 +617,8 @@ class Homeconnect:
                     logger.critical("No payload (states) found!, no publish to MQTT Brocker !")
                     return False
 
-                self.__saveLog__(states=payload, fields=_addOns.get("logfields", None))
+                if states.get(int(states.get("ProgramProgress", 0)) > 0):
+                    self.__saveLog__(states=payload, fields=_addOns.get("logfields", None))
 
                 ## publish the new state
                 logger.info(f"{name} publish state data {states.get('wslink', 'unkown')} to {topic}")
@@ -590,6 +635,10 @@ class Homeconnect:
 
         except Exception as e:
             logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
+            if _payload and name and self.mqtt_prefix:
+                _payload = self.err_message.getPayload(tag=f"{name} statechanged", message=str(e))
+                _topic = f"{self.mqtt_prefix}{name}/error"
+                client.publish(topic=_topic, payload=_payload, retain=True)
 
         return False
 
@@ -597,19 +646,20 @@ class Homeconnect:
         """send the HealthCheck message for each device"""
         try:
             if not self.timeHealthCheck:
-               # disabled: skip
-               return
+                # disabled: skip
+                return
             if client and self.dev and self.hearBeatMessage:
                 for name in self.hearBeatMessage:
-                    self.__deviceReconnect__(logEnabled=False)
+                    if self.lastPayload:
+                        self.__deviceReconnect__(logEnabled=False)
                     if self.dev[name].ws.host:
-                        _ping = ping(self.dev[name].ws.host, unit='ms')
+                        _ping = ping(self.dev[name].ws.host, unit="ms")
                         if isinstance(_ping, float):
-                            self.hearBeatMessage[name].ping = round(_ping,2)
+                            self.hearBeatMessage[name].ping = round(_ping, 2)
                     ## Additional HealthCheck info
-                    self.hearBeatMessage[name].hostname = os.uname().nodename
                     self.hearBeatMessage[name].devices = len(self.dev)
-                    self.hearBeatMessage[name].redelay = int(time.time() - self.lastPayload)
+                    if self.lastPayload:
+                        self.hearBeatMessage[name].redelay = int(time.time() - self.lastPayload)
                     self.hearBeatMessage[name].timereconnect = self.timereconnect
                     self.hearBeatMessage[name].timeHealthCheck = self.timeHealthCheck
                     if self.addons.get(name, None):
@@ -625,14 +675,15 @@ class Homeconnect:
             else:
                 logger.critical("No HealthCheck message sendet, missing data")
         except Exception as e:
+
             logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
 
-    def __deviceReconnect__(self, logEnabled:bool=True):
+    def __deviceReconnect__(self, logEnabled: bool = True):
         """device(s) reconnect"""
         try:
             if not self.timereconnect:
-               # disabled: skip
-               return
+                # disabled: skip
+                return
             if (int(time.time() - self.lastPayload)) > self.timereconnect:
                 if logEnabled:
                     logger.debug(f"checked timeslot: {int((time.time() - self.lastPayload))} > {self.timereconnect}")
@@ -646,7 +697,7 @@ class Homeconnect:
                     logger.debug("Reconnect Message skipped.")
 
         except Exception as e:
-            logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
+            logger.critical(f"{str(e)}, line {sys.exc_info()[-1].tb_lineno}")
 
     def run(self):
         """home connect mqtt hc2mqtt"""
@@ -665,6 +716,7 @@ class Homeconnect:
                     client.subscribe(mqtt_set_topic)
                     mqtt_set_topic = f"{self.mqtt_prefix}{device['name']}/refresh"
                     client.subscribe(mqtt_set_topic)
+
                     for value in device["features"]:
                         # If the device has the ActiveProgram feature it allows programs to be started
                         # and scheduled via /ro/activeProgram
@@ -773,6 +825,7 @@ class Homeconnect:
                 self.resfilter = len(_resources)
 
                 mqtt_topic = self.mqtt_prefix + _name
+
                 thread = Thread(target=self.client_connect, args=(client, device, mqtt_topic, self.domain_suffix, _resources, self.debug))
                 thread.start()
 
@@ -793,7 +846,18 @@ class Homeconnect:
 
                 schedule_loop_continuous()
 
-            client.loop_forever()
+                try:
+                    client.loop_forever()
+                except KeyboardInterrupt:
+                    logger.critical("Stopped by KeyboardInterrupt, disconnect mqtt client")
+                    for device in devices:
+                        logger.debug(f"{mqtt_topic} = offline")
+                        client.publish(topic=f"{mqtt_topic}/LWT", payload="offline", retain=True)
+                    logger.debug(f"{self.mqtt_prefix}/LWT = offline")
+                    client.publish(topic=f"{self.mqtt_prefix}LWT", payload="offline", retain=True)
+                    time.sleep(1)
+                    client.disconnect()
+                    os._exit(getattr(os, "_exitcode", 0))
 
         except Exception as e:
             logger.critical(f"MQTT FATAL ERROR {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
@@ -851,7 +915,7 @@ class Homeconnect:
             time.sleep(3)
             try:
                 """connect to the device"""
-                logger.debug(f"{name} connecting to {host}")
+                logger.info(f"{name} connecting to {host}")
                 if self.debug:
                     logger.info(f"{name} Logging Debug enabled for HCSocket and HCDevice")
                 else:
@@ -862,9 +926,14 @@ class Homeconnect:
                 self.__sendHealthCheckMessage__(client=client)
 
             except Exception as e:
-                logger.warning(f"{device['name']}, ERROR  {str(e)}, line {sys.exc_info()[-1].tb_lineno}, Offline")
+                logger.warning(f"{name}, ERROR  {str(e)}, line {sys.exc_info()[-1].tb_lineno}, Offline")
+                if self.hearBeatMessage and name:
+                    self.hearBeatMessage[name].errortime = now()
+                    self.hearBeatMessage[name].lasterror = str(e)
+                _payload = self.err_message.getPayload(tag=f"{name} connect", message=str(e))
+                if _payload:
+                    client.publish(topic=f"{mqtt_topic}/error", payload=_payload, retain=True)
                 client.publish(topic=f"{mqtt_topic}/LWT", payload="offline", retain=True)
-
             time.sleep(57)
 
 
@@ -872,6 +941,11 @@ if __name__ == "__main__":
     """Start Main application"""
     try:
         logger.info(f"APP {__APPLICATION_NAME__}, Version {__version__} starting")
-        hc = Homeconnect()
+        try:
+            hc = Homeconnect()
+        except KeyboardInterrupt:
+            logger.critical("Stopped by KeyboardInterrupt")
+            pass
+
     except Exception as e:
         logger.critical(f"APP {__APPLICATION_NAME__} ERROR {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
