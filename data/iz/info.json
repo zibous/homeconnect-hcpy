@@ -1,0 +1,19 @@
+{
+    "deviceID": "012090517380017161",
+    "eNumber": "SMV4HCX48E/24",
+    "brand": "BOSCH",
+    "vib": "SMV4HCX48E",
+    "mac": "C8-D7-78-3B-E8-73",
+    "haVersion": "5.4",
+    "swVersion": "3.11.4.1",
+    "hwVersion": "2.2.0.5",
+    "deviceType": "Dishwasher",
+    "deviceInfo": "",
+    "customerIndex": "24",
+    "serialNumber": "012090517380017161",
+    "fdString": "0209",
+    "shipSki": "9B839DAC91C4A18283E6B863BA07B76EB831485B",
+    "wslink": "/iz/info",
+    "lastupdate": "2024-08-21 15:32:38.282314",
+    "Name": "dishwasher"
+}

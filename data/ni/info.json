@@ -1,0 +1,26 @@
+{
+    "interfaceID": 0,
+    "type": "WiFi",
+    "ssid": "IPS-NP1",
+    "rssi": -62,
+    "primary": true,
+    "status": "CONNECTED",
+    "configured": true,
+    "euiAddress": "C8:D7:78:3B:E8:73",
+    "ipV4": {
+        "ipAddress": "10.1.1.178",
+        "prefixSize": 24,
+        "gateway": "10.1.1.254",
+        "dnsServer": "10.1.1.254"
+    },
+    "ipV6": {
+        "ipAddress": "fdf7:6fef:ed32:9295:cad7:78ff:fe3b:e873",
+        "prefixSize": 64,
+        "gateway": "",
+        "dnsServer": ""
+    },
+    "wslink": "/ni/info",
+    "lastupdate": "2024-08-21 15:32:38.496275",
+    "Name": "dishwasher",
+    "rssiq": 76.0
+}

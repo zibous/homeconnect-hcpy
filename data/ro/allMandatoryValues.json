@@ -1,0 +1,137 @@
+{
+    "AllowBackendConnection": true,
+    "BackendConnected": true,
+    "RemoteControlLevel": "Fernstart Remote",
+    "SoftwareUpdateAvailable": "Nein",
+    "ConfirmPermanentRemoteStart": "Ausgeschaltet",
+    "ActiveProgram": 0,
+    "SelectedProgram": 8195,
+    "RemoteControlStartAllowed": true,
+    "DishwasherTimestamp": "2024-08-21T13:32:15",
+    "RemoteControlActive": true,
+    "AquaStopOccured": "Nein",
+    "DoorState": "Geschlossen",
+    "DishwasherCode535": false,
+    "PowerState": "Aus",
+    "ProgramFinished": "Ja",
+    "ProgramProgress": 0,
+    "LowWaterPressure": "Nein",
+    "RemainingProgramTime": 8400,
+    "ProgramAborted": "Nein",
+    "DishwasherCode547": false,
+    "RemainingProgramTimeIsEstimated": true,
+    "OperationState": "Bereit",
+    "StartInRelative": 0,
+    "EnergyForecast": 57,
+    "WaterForecast": 54,
+    "ConnectLocalWiFi": "Ausgeschaltet",
+    "SoftwareDownloadAvailable": "Nein",
+    "SoftwareUpdateSuccessful": "Nein",
+    "ErrorCodesList": {
+        "length": 0,
+        "list": []
+    },
+    "Started": 2,
+    "Latest": {
+        "start": "2024-08-20T07:13:22+00:00",
+        "end": "2024-08-20T07:13:36+00:00",
+        "counter": 1,
+        "sequence": [
+            {
+                "configuration": {
+                    "program": 8195,
+                    "options": [
+                        {
+                            "uid": 5121,
+                            "value": false
+                        },
+                        {
+                            "uid": 5124,
+                            "value": false
+                        },
+                        {
+                            "uid": 5136,
+                            "value": false
+                        },
+                        {
+                            "uid": 5127,
+                            "value": false
+                        }
+                    ]
+                },
+                "details": [
+                    {
+                        "uid": 626,
+                        "value": 1
+                    },
+                    {
+                        "uid": 4356,
+                        "value": false
+                    },
+                    {
+                        "uid": 4357,
+                        "value": 0
+                    },
+                    {
+                        "uid": 4354,
+                        "value": 0
+                    }
+                ]
+            }
+        ]
+    },
+    "EndTrigger": "Programm abgebrochen",
+    "SilenceOnDemandRemainingTime": 0,
+    "RinseAid": "Aus",
+    "SensitivityTurbidity": "Standard",
+    "ExtraDry": false,
+    "HotWater": "Nein",
+    "EcoAsDefault": "Letztes Programm",
+    "SoundLevelSignal": "Laut",
+    "WaterHardness": "H00-weich",
+    "InfoLight": true,
+    "SilenceOnDemandDefaultTime": 1800,
+    "SpeedOnDemand": false,
+    "InternalError": "Nein",
+    "CheckFilterSystem": "Nein",
+    "DrainingNotPossible": "Nein",
+    "DrainPumpBlocked": "Nein",
+    "WaterheaterCalcified": "Nein",
+    "LowVoltage": "Nein",
+    "SaltLack": "Nein",
+    "RinseAidLack": "Nein",
+    "SaltNearlyEmpty": "Nein",
+    "RinseAidNearlyEmpty": "Nein",
+    "MachineCareReminder": "Nein",
+    "DishwasherCode4632": 0,
+    "DishwasherCode4641": 0,
+    "DishwasherCode4654": 0,
+    "MachineCareAndFilterCleaningReminder": "Nein",
+    "SmartFilterCleaningReminder": "Nein",
+    "HalfLoad": false,
+    "VarioSpeedPlus": false,
+    "SilenceOnDemand": false,
+    "Handling": "Schalter",
+    "Functionality": "Programm",
+    "Name": "dishwasher",
+    "Program": {
+        "length": 1,
+        "list": [
+            {
+                "program": 8200,
+                "options": [
+                    {
+                        "uid": 5136,
+                        "value": false
+                    },
+                    {
+                        "uid": 558,
+                        "value": 0
+                    }
+                ]
+            }
+        ]
+    },
+    "wslink": "/ro/allMandatoryValues",
+    "lastupdate": "2024-08-21 15:32:38.500769"
+}

@@ -40,31 +40,32 @@ class HomeconnecAccount:
     ready: bool = False
     deviceconfigs: str = None
 
-    def __init__(self, email: str = None, password: str = None, configdir="./config"):
+    def __init__(self, email: str = None, password: str = None, configdir: str = "./config", configfile: str = "./config/devices.json"):
         """## Connect to homeconnect Account
         ### Args:
         - `email (str)`: account email address
         - `password (str)`: single key passord
         - `configdir (str, optional)`: config directory, defaults to "./config".
+        - `configfile (str, optional)`: configuration file, defaults to "./config/config.json".
         """
         self.email = email
         self.password = password
         self.configdir = configdir
-        self.devicesfile = f"{self.configdir}/devices.json"
+        self.devicesfile = configfile
         self.ready = self.__checkDevicesData__()
 
     def __checkDevicesData__(self) -> bool:
         if os.path.isfile(self.devicesfile):
             if os.path.isfile(self.devicesfile):
-                with open(self.devicesfile, "r", encoding="utf8") as f:
-                    data = json.load(f)
+                data = json.load(open(self.devicesfile))
+                # with open(self.devicesfile, "r", encoding="utf8") as f:
+                #     data = json.load(f)
                 if data:
                     return True
         else:
             return getConfig(email=self.email, password=self.password, devices_file=self.devicesfile)
 
         return False
-
 
 
 # These two lines enable debugging at httplib level (requests->urllib3->http.client)
@@ -329,7 +330,7 @@ def getConfig(email: str, password: str, devices_file=None) -> bool:
         if account:
             _accountFile = f"{configdir}/account.json"
             os.makedirs(os.path.dirname(_accountFile), exist_ok=True)
-            with open(_accountFile, 'w', encoding='utf8') as f:
+            with open(_accountFile, "w", encoding="utf8") as f:
                 f.write(json.dumps(obj=account, indent=4, ensure_ascii=True))
         else:
             logger.critical("No Valid account data found !")
@@ -382,7 +383,7 @@ def getConfig(email: str, password: str, devices_file=None) -> bool:
 
         if configs and devices_file:
             os.makedirs(os.path.dirname(devices_file), exist_ok=True)
-            with open(devices_file, 'w', encoding='utf8') as f:
+            with open(devices_file, "w", encoding="utf8") as f:
                 f.write(json.dumps(obj=configs, indent=4, ensure_ascii=True))
             return True
         else:

@@ -280,14 +280,6 @@ Instead of MQTT Discovery, I use an MQTT template (see directory `/homeassistant
                     raise ValueError(f"Unable to configure appliance. Option UID
                                        {option_uid} is not" " valid for this device.")
     ```
-- Error ping/pong timed out
-  I haven't been able to find out what the cause is yet. But it's not critical, as it only occurs once a day.
-  It could be due to the WiFi or the device ?
-
-  ```log
-   2024-07-03 11:36:15.887 | ERROR    | hcpy.HCSocket:_on_error:206 - error ping/pong timed out
-  ```
-
 
 <br/><br/>
 

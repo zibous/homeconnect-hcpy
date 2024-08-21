@@ -18,14 +18,16 @@ import sys
 
 
 dirname, filename = os.path.split(os.path.abspath(__file__))
+__LOGCOLORS__ = True
 
 if os.path.basename(dirname) == "app":
-   __APPLICATION_NAME__ = f"docker.{os.uname().nodename}.app"
+    __APPLICATION_NAME__ = f"docker.{os.uname().nodename}.app"
+    __LOGCOLORS__ = False
 else:
-   __APPLICATION_NAME__ = f"{os.path.basename(dirname)}-{os.uname().nodename}"
+    __APPLICATION_NAME__ = f"{os.path.basename(dirname)}-{os.uname().nodename}"
 
 __author__ = "Peter Siebler"
-__version__ = "1.1.5"
+__version__ = "1.1.7"
 __license__ = "MIT"
 
 import json
@@ -46,6 +48,9 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.properties import Properties
 from paho.mqtt.packettypes import PacketTypes
 
+import pandas as pd
+
+ping.EXCEPTIONS = True
 properties = Properties(PacketTypes.CONNECT)
 properties.SessionExpiryInterval = 30 * 60  # in seconds
 
@@ -58,11 +63,12 @@ from loguru import logger
 
 ## init logger
 logger = logger.patch(lambda record: record.update(name=record["file"].name))
-logger = logger.opt(colors=False)
+
+logger = logger.opt(colors=__LOGCOLORS__)
 min_level = "INFO"
 
 
-def setlogLevel(min_level: str = min_level):
+def setlogLevel(level: str = min_level):
     """set the log level for the current logger:
     ### Args:
         - `min_level (str)`: min level for logging
@@ -77,10 +83,28 @@ def setlogLevel(min_level: str = min_level):
     """
 
     def my_filter(record):
-        return record["level"].no >= logger.level(min_level).no
+        return record["level"].no >= logger.level(level).no
 
+    # remove the prevoius and create a new logger
     logger.remove()
-    logger.add(sys.stderr, filter=my_filter)
+
+    # add log filter for levels and colors
+    logger.add(sys.stderr, filter=my_filter, colorize=__LOGCOLORS__)
+
+    # add log to file if logs dir exits
+    if os.path.isdir(os.path.abspath("./logs")):
+        logger.add(
+            f"{os.path.abspath('./logs')}/app-error.log",
+            format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {module}.{function}:{line} : {message}",
+            level="WARNING",
+            enqueue=True,
+            retention="7 days",
+        )
+    logger.info("Logger config set to {level}")
+
+
+# set default level at startup
+setlogLevel(level=min_level)
 
 
 class ErrorMessage:
@@ -90,19 +114,21 @@ class ErrorMessage:
     timestamp: str = "--"
     message: str = "None"
     counter: int = 0
-    hostname:str=__APPLICATION_NAME__
+    hostname: str = __APPLICATION_NAME__
     tag: str = "main"
 
     def __init__(self):
-        self.timestamp: str = "--"
-        self.message: str = "None"
-        self.counter: int = 0
-        self.tag: str = "main"
+        self.timestamp = "--"
+        self.message = "None"
+        self.counter = 0
+        self.tag = "main"
         self.hostname = __APPLICATION_NAME__
 
     def __update__(self):
         """update the HealthCheck"""
         self.timestamp = now()
+        if self.counter is None:
+            self.counter = 0
         self.counter += 1
 
     def getPayload(self, name: str = None, message: str = None) -> str:
@@ -125,37 +151,43 @@ class HealthCheckMessage:
     lastmodified: str = "--"
     elapsed: int = 0
     reconnect: str = "--"
-    taskstate: str = "idle"
+    taskstate: str = "offline"
     ping: float = 0
+    pingerror: int = 0
+    pingcount: int = 0
+    pingratio: float = 100
     redelay: int = 0
     timereconnect: int = 0
     timeHealthCheck: int = 0
     addons: int = 0
     resfilter: int = 0
-    lasterror: str = ""
+    lasterror: str = "--"
     errortime: str = "--"
     loglevel: str = min_level
     pythonvers = sys.version
     platform = sys.platform
 
     def __init__(self, name: str = None):
-        self.device: str = name
-        self.timestamp: str = now()
-        self.counter: int = 0
-        self.state: str = "Offline"
-        self.lastmodified: str = "--"
-        self.elapsed: int = 0
-        self.reconnect: str = "--"
-        self.taskstate: str = "idle"
-        self.ping: float = 0
-        self.redelay: int = 0
-        self.timereconnect: int = 0
-        self.timeHealthCheck: int = 0
-        self.addons: int = 0
-        self.resfilter: int = 0
-        self.lasterror: str = "None"
-        self.errortime: str = "--"
-        self.loglevel: str = min_level
+        self.device = name
+        self.timestamp = now()
+        self.counter = 0
+        self.state = "Offline"
+        self.lastmodified = "--"
+        self.elapsed = 0
+        self.reconnect = "--"
+        self.taskstate = "waiting"
+        self.ping = 0
+        self.pingcount = 0
+        self.pingerror = 0
+        self.pingratio = 100
+        self.redelay = 0
+        self.timereconnect = 0
+        self.timeHealthCheck = 0
+        self.addons = 0
+        self.resfilter = 0
+        self.lasterror = "--"
+        self.errortime = "--"
+        self.loglevel = min_level
         self.pythonvers = sys.version
         self.platform = sys.platform
         self.hostname = __APPLICATION_NAME__
@@ -163,9 +195,14 @@ class HealthCheckMessage:
     def __update__(self):
         """update the HealthCheck"""
         self.timestamp = now()
+        if self.counter is None:
+            self.counter = 0
         self.counter += 1
         self.state = "Online"
         self.elapsed = round(time.time() - self.start, 0)
+        if self.pingcount:
+            # (1 - 60/100)*100
+            self.pingratio = round(((1 - self.pingerror / self.pingcount) * 100), 2)
 
     def getPayload(self) -> str:
         """get the payload"""
@@ -229,7 +266,7 @@ class Homeconnect:
 
     # device dict
     dev = {}
-    hearBeatMessage = {}
+    heartBeatMessage = {}
     addons = {}
     resfilter: int = 0
 
@@ -240,9 +277,12 @@ class Homeconnect:
     # power and water meter
     powermeterdisplay: float = 0.000
     waterdisplay: float = 0.000
+
+    # application settingd
     logdir: str = None
     payloadDir: str = None
-    lastPayload = None
+    lastPayloadTime: float = 0
+    lastReconectTime: float = time.time()
 
     err_message = None
 
@@ -257,13 +297,13 @@ class Homeconnect:
 
         if os.path.isdir(os.path.abspath("./logs")):
             self.logdir = os.path.abspath("./logs")
-            logger.debug(f"Log dir enabled: {self.logdir}")
+            logger.info(f"Log dir enabled: {self.logdir}")
         else:
-            logger.debug(f"Log dir disabled, directory not present!")
+            logger.info(f"Log dir disabled, directory not present!")
 
         if os.path.isdir("./data"):
             self.payloadDir = os.path.abspath("./data")
-            logger.debug(f"Payload dir enabled: {self.payloadDir}")
+            logger.info(f"Payload dir enabled: {self.payloadDir}")
         else:
             logger.debug(f"data dir disabled, directory not present!")
 
@@ -290,7 +330,7 @@ class Homeconnect:
                     setattr(self, key, value)
 
                 logger.info(f"Set Debug level to {self.LOGLEVEL}")
-                setlogLevel(self.LOGLEVEL)
+                setlogLevel(level=self.LOGLEVEL)
 
                 self.devices_file = os.path.abspath(self.devices_file)
                 logger.success(f"Application config file{self.config_file} found.")
@@ -309,7 +349,7 @@ class Homeconnect:
                 logger.info("Try to connect to Homeconnect Account")
                 _configdir = os.path.dirname(os.path.abspath(self.config_file))
                 if self.hc_username and self.hc_password:
-                    hca = login.HomeconnecAccount(email=self.hc_username, password=self.hc_password, configdir=_configdir)
+                    hca = login.HomeconnecAccount(email=self.hc_username, password=self.hc_password, configdir=_configdir, configfile=self.devices_file)
                     if not hca.ready:
                         logger.critical(f"Devices file {self.devices_file} not found, run hc-login first.")
                         sys.exit(f"Missing Devices File  {self.devices_file}")
@@ -355,23 +395,37 @@ class Homeconnect:
             raise e
 
     def __turn_on__(self):
-        """turn the state on if previous state was off"""
+        """simple statemachine, turn the state on if previous state was off"""
         if self.state == "off":
             self._print_state_change("on")
             self.state = "on"
+            self.taskstate = "starting"
         else:
-            self._state = 0
+            self._print_state_change("on")
+            self.state = "on"
+            self.taskstate = "running"
 
     def __turn_off__(self):
-        """turn the state off if previous state was on"""
+        """simple statemachine, turn the state off if previous state was on"""
         if self.state == "on":
             self._print_state_change("off")
             self.state = "off"
+            self.taskstate = "ending"
         else:
             self._state = 0
+            self.state = "off"
+            self.taskstate = "waiting"
 
     def status(self, onstate: bool = False) -> int:
-        """set the state based on onstate settings"""
+        """## simple statemachine
+
+        ### Args:
+            - `onstate true`: switch on. Defaults to False.
+              `onstate false`: switch off. Defaults to False.
+
+        ### Returns:
+            - `int`: 1 = switched to on | 2 = switched to off
+        """
         if onstate:
             self.__turn_on__()
             return self._state
@@ -380,15 +434,15 @@ class Homeconnect:
             return self._state
 
     def _print_state_change(self, new_state) -> str:
-        """private print stat and set the _state
+        """simple statemachine, private print stat and set the _state
         _state 1 : switched to on
         _state 2 : switched to off
         _state 0 : idle
         """
         logger.debug(f"Dishwasher switched from {self.state}-{new_state}.")
-        if self.state == "off" and new_state == "on":
+        if self.state == "off" and new_state == "on" or self.state == "on" and new_state == "on":
             self._state = 1
-        elif self.state == "on" and new_state == "off":
+        elif self.state == "on" and new_state == "off" or self.state == "off" and new_state == "off":
             self._state = 2
         else:
             self._state = 0
@@ -401,8 +455,9 @@ class Homeconnect:
                 _states = {}
                 ## try to load the prev states
                 if os.path.isfile(_file):
-                    with open(_file, "r") as f:
-                        _states = json.load(f)
+                    _states = json.load(open(_file))
+                    # with open(_file, "r") as f:
+                    #     _states = json.load(f)
                     logger.debug(f"Prev states loaded from {_file}")
                     return _states
         except Exception as e:
@@ -429,16 +484,16 @@ class Homeconnect:
                     logger.debug(f"Merge states with previous states")
                     ## interate thow all states items
                     for key in states.keys():
-                        _value = states.get(key, "None")
-                        _states[key] = _value
+                        _states[key] = states.get(key, "None")
                 else:
                     logger.debug(f"Prev not states found")
                     _states = states
                 _file = f"{self.payloadDir}/payload.json"
                 os.makedirs(os.path.dirname(_file), exist_ok=True)
+                # write the new data to the file
                 with open(_file, "w", encoding="utf8") as f:
                     f.write(json.dumps(obj=_states, indent=4, ensure_ascii=True))
-                logger.debug(f"Prev states saved to {_file}")
+                logger.info(f"Prev states saved to {_file}")
                 return _states
             else:
                 logger.critical("No States found !")
@@ -448,32 +503,49 @@ class Homeconnect:
 
         return states
 
+    def __logPayloadData__(self, states: dict = None, filename: str = None) -> bool:
+        """## log payload data to the defined filename, only enabled if Loglevel: DEBUG
+
+        ### Args:
+            - `states (dict, optional)`: payload data. Defaults to None.
+            - `filename (str, optional)`: append data to the defined filename. Defaults to None.
+
+        ### Returns:
+            - `bool`: _description_
+        """
+        if self.LOGLEVEL != "DEBUG":
+            return True
+        if states and filename:
+            _file = f"{self.logdir}/{filename}"
+            addHeader = not os.path.isfile(_file)
+            df = pd.json_normalize(states)
+            df.to_csv(_file, index=False, encoding="utf-8", mode="a" , header=addHeader)
+            return True
+        else:
+            logger.debug("save paylod data skipped")
+            return False
+
     def __saveLog__(self, states: dict = None, fields: list = None):
         """## save states log if states present and log dir enabled
 
         ### Args:
             - `states (dict, optional)`: device states. Defaults to None.
-            - `fields (list, optional)`: filter fields for log. Defaults to None.
+            - `fie^lds (list, optional)`: filter fields for log. Defaults to None.
         """
-
-        def my_filtering_function(pair):
-            key, value = pair
-            if key in fields:
-                return True
-            else:
-                return False
-
         try:
             if not states or not fields or not self.logdir:
                 logger.debug("logger not enabled (not states or fields or no log dir), save logfiles skipped")
                 return
-            # filter for states
-            result = dict(filter(my_filtering_function, states.items()))
-            header = None
-            if result:
-                _current_datetime = datetime.now().strftime("%Y-%m")
+            if fields and len(fields):
+                result = {}
+                for key, val in fields[0].items():
+                    result[key] = "--"
+                    if states.__contains__(key):
+                        result[key] = states.get(key, "--")
+                _current_datetime = datetime.now().strftime("%Y%m")
                 _devicename = states.get("Name", "device")
-                _file = f"{self.logdir}/{_devicename}.log-{_current_datetime}.csv"
+                _file = f"{self.logdir}/{_current_datetime}-{_devicename}data.csv"
+                header = None
                 if not os.path.isfile(_file):
                     header = ",".join(result.keys())
                 strData = ",".join(str(val) for key, val in result.items())
@@ -488,6 +560,24 @@ class Homeconnect:
         except Exception as e:
             logger.critical(f"{str(e)}, line {sys.exc_info()[-1].tb_lineno}")
 
+    def __calcWifiQuality__(self, rssi: float = 0.00) -> float:
+        """## Calc WIFI Quality
+
+        ### Args:
+            - `rssi (float, optional)`: WIFI RSSI Value_. Defaults to 0.00.
+
+        ### Returns:
+            - `float`: Quality
+        """
+        if rssi:
+            if rssi <= -100:
+                return float(0.00)
+            elif rssi >= -50:
+                return float(100.00)
+            else:
+                return round(float(2 * (rssi + 100)), 2)
+        return float(0.00)
+
     def onStateChanged(self, client, name: str, topic: str, states: dict) -> bool:
         """simple callback state payload from client add additional data (energy, water)"""
         try:
@@ -496,88 +586,132 @@ class Homeconnect:
 
                 logger.debug(f"Resource - Websocket Link: {states.get('wslink', 'unkown')}")
 
-                if self.LOGLEVEL == "DEBUG" and states.get("wslink", None):
-                    _topic = f"{self.mqtt_prefix}{name}/states{states['wslink']}"
-                    logger.info(f"{name} publish state data {topic}")
-                    _result = client.publish(topic=_topic, payload=json.dumps(states, ensure_ascii=True), retain=False)
-                    time.sleep(1)
-
                 states["lastupdate"] = now()
                 states["Name"] = name
 
-                if self.timeHealthCheck and self.hearBeatMessage and self.hearBeatMessage.get(name, None):
-                    self.hearBeatMessage[name].lastmodified = now()
+                if self.timeHealthCheck and self.heartBeatMessage and self.heartBeatMessage.get(name, None):
+                    self.heartBeatMessage[name].lastmodified = now()
 
-                _addOns = self.addons.get(name, None)
-                if _addOns.get("installed", None):
-                    states["installed"] = _addOns.get("installed", None)
-                    states["operatingtime"] = self.timeDelta(strDate=states["installed"], shortmode=True, times="y")
+                if states.get("wslink", None):
+                    _topic = f"{self.mqtt_prefix}{name}/states{states['wslink']}"
+                    logger.info(f"{name} publish state data {topic}")
+                    if states.get("rssi", None):
+                        states["rssiq"] = self.__calcWifiQuality__(states.get("rssi", 0))
+                    _result = client.publish(topic=_topic, payload=json.dumps(states, ensure_ascii=True), retain=True)
+                    # save the current wslink states /ro/allMandatoryValues
+                    _file = "{}/{}.json".format(self.payloadDir, states.get("wslink", "unkown"))
+                    os.makedirs(os.path.dirname(_file), exist_ok=True)
+                    with open(_file, "w", encoding="utf8") as f:
+                        f.write(json.dumps(obj=states, indent=4, ensure_ascii=True))
+
+                # -------------------------------------------------------------
+                # device info              /iz/info
+                # net interface info       /ni/info
+                # events states            /ro/values
+                # state values             /ro/allMandatoryValues
+                # -------------------------------------------------------------
+                if states.get("wslink", "unkown") in ("/iz/info", "/ni/info"):
+                    logger.debug(f"{name} skip merging states {states.get('wslink', 'unkown')}")
+                    return
+                else:
+                    logger.debug(f"{name} merging states {states.get('wslink', 'unkown')}")
 
                 # get the running state from the device
-                if states.__contains__("PowerState") and states.__contains__("ProgramProgress"):
+                logger.debug(f"{name} Try to reset RemainingProgramTime: { states.get('RemainingProgramTime', 8400) }")
 
-                    logger.debug(f"{name} Calc the water and energy usage")
-                    states["isrunning"] = False
+                # _t = int(states.get("RemainingProgramTime", 8400))
 
-                    # get the current status for the dishwasher
-                    logger.debug(f"Powerstate: {states.get('PowerState', 'Off')}, ProgramProgress:{states.get('ProgramProgress', 1)}")
-                    _dws = states.get(int(states.get("ProgramProgress", 0)) > 0)
-                    _dws = self.status(_dws)
+                isWorking = states.get("PowerState", "aus").lower() in ("ein", "on")
+                states["isworking"] = isWorking
 
-                    if self.status(_dws) == 1:
-                        logger.debug(f"{name} is now starting")
-                        states["sessionstart"] = now()
-                        states["sessiontime"] = ""
-                        states["isrunning"] = True
+                # state statusmachine
+                _dws = self.status(states.get("isworking", False))
+                states["taskstate"] = self.taskstate
+                states["ProgramPhase"] = states.get("ProgramPhase", None)
 
-                    if self.status(_dws) == 2:
-                        logger.debug(f"{name} is now ending")
-                        states["sessionsend"] = now()
-                        states["isrunning"] = False
-                        states["sessiontime"] = self.timeDelta(strDate=states["sessionsend"], shortmode=False, times="min")
+                if states.get("isworking", False):
+                    logger.debug(f"{name} is currently working, Program Phase: {states['ProgramPhase']}")
+                else:
+                    logger.debug(f"{name} is standby, Program Phase: {states['ProgramPhase']}")
 
-                    _tasktext = ["idle", "started", "ending"]
-                    states["taskstate"] = _tasktext[self.status(_dws)]
-                    self.hearBeatMessage[name].taskstate = states["taskstate"]
+                if _dws == 0:
+                    logger.debug(f"{name} is idle")
+                    states["sessionstart"] = ""
+                    states["sessionsend"] = ""
+                    states["sessiontime"] = ""
+                    states["isrunning"] = states["isworking"]
 
-                    if _addOns:
-                        _powermeter = _addOns.get("powermeter", None)
-                        if _powermeter:
-                            # ----------------------------------------------------------
-                            # get the data from the powermeter (tasmota switch) payload:
-                            # ----------------------------------------------------------
-                            # {"StatusSNS":{"Time":"2024-06-26T16:19:59",
-                            #               "ENERGY":{"TotalStartTime":"2022-09-03T13:02:25",
-                            #                         "Total":167.743,
-                            #                         "Yesterday":0.779,
-                            #                         "Today":0.045,"Power": 3,
-                            #                         "ApparentPower":30,
-                            #                         "ReactivePower":30,
-                            #                         "Factor":0.10,
-                            #                         "Voltage":227,
-                            #                         "Current":0.133
-                            #                        }
-                            #               }
-                            # }
-                            pmd = states["powermeter"] = requests.get(url=_powermeter).json()
-                            if pmd:
-                                _temp = pmd.get("StatusSNS", {})
-                                _temp = _temp.get("ENERGY", {})
-                                _temp = _temp.get("Total", 0.00)
-                                if _dws == 1:
-                                    logger.debug(f"{name} is now strating, save powermeter data")
-                                    self.powermeterdisplay = _temp
-                                elif _dws == 2:
-                                    logger.debug(f"{name} is now strating, calc the used energy")
-                                    if self.powermeterdisplay and _temp > self.powermeterdisplay:
-                                        states["energy_used"] = _temp - self.powermeterdisplay
-                                else:
-                                    logger.debug(f"{name} is currently not consuming any energy")
-                                    states["powerdisplay"] = _temp
-                                    states["energy_used"] = float(0.00)
+                if _dws == 1:
+                    logger.debug(f"{name} is now starting")
+                    states["sessionstart"] = now()
+                    states["sessiontime"] = ""
+                    states["isrunning"] = states["isworking"]
+
+                if _dws == 2:
+                    logger.debug(f"{name} is now ending")
+                    states["sessionsend"] = now()
+                    states["isrunning"] = states["isworking"]
+                    states["sessiontime"] = self.timeDelta(strDate=states["sessionsend"], shortmode=False, times="min")
+
+                self.heartBeatMessage[name].taskstate = states["taskstate"]
+
+                # convert timestamp to local
+                if states.get("DishwasherTimestamp", None):
+                    states["DishwasherTimestamp"] = arrow.get(states["DishwasherTimestamp"]).to(self.tzinfo).format()
+
+                if states.get("Latest", None):
+                    if states["Latest"]["start"]:
+                        states["taskstart"] = arrow.get(states["Latest"]["start"]).to(self.tzinfo).format()
+                    if states["Latest"]["end"]:
+                        states["taskend"] = arrow.get(states["Latest"]["end"]).to(self.tzinfo).format()
+
+                # optional, only if addons enabled
+                _addOns = self.addons.get(name, None)
+                if _addOns:
+
+                    if _addOns.get("installed", None):
+                        states["installed"] = _addOns.get("installed", None)
+                        states["operatingtime"] = self.timeDelta(strDate=states["installed"], shortmode=True, times="y")
+
+                    _powermeter = _addOns.get("powermeter", None)
+                    if _powermeter:
+                        logger.debug(f"{name} Calc the energy usage")
+                        # ----------------------------------------------------------
+                        # get the data from the powermeter (tasmota switch) payload:
+                        # ----------------------------------------------------------
+                        # {"StatusSNS":{"Time":"2024-06-26T16:19:59",
+                        #               "ENERGY":{"TotalStartTime":"2022-09-03T13:02:25",
+                        #                         "Total":167.743,
+                        #                         "Yesterday":0.779,
+                        #                         "Today":0.045,"Power": 3,
+                        #                         "ApparentPower":30,
+                        #                         "ReactivePower":30,
+                        #                         "Factor":0.10,
+                        #                         "Voltage":227,
+                        #                         "Current":0.133
+                        #                        }
+                        #               }
+                        # }
+                        pmd = states["powermeter"] = requests.get(url=_powermeter).json()
+                        if pmd:
+                            _totalEnerie = pmd.get("StatusSNS", {})
+                            _totalEnerie = _totalEnerie.get("ENERGY", {})
+                            _totalEnerie = _totalEnerie.get("Total", 0.00)
+                            if _dws == 1 and self.taskstate == "starting":
+                                logger.debug(f"{name} is now strating, save powermeter data")
+                                self.powermeterdisplay = _totalEnerie
+                            elif _dws == 2 and self.taskstate == "ending":
+                                logger.debug(f"{name} is now strating, calc the used energy")
+                                if self.powermeterdisplay and _totalEnerie > self.powermeterdisplay:
+                                    states["energy_used"] = _totalEnerie - self.powermeterdisplay
+                            else:
+                                logger.debug(f"{name} is currently not consuming any energy")
+                                states["powerdisplay"] = _totalEnerie
+                                states["energy_used"] = float(0.00)
 
                         _watermeter = _addOns.get("watermeter", None)
                         if _watermeter:
+                            logger.debug(f"{name} Calc the water usage")
                             # ----------------------------------------------------------
                             # get the data from the watermeter (esp-device) payload:
                             # ----------------------------------------------------------
@@ -588,11 +722,11 @@ class Homeconnect:
                             mwd = states["watermeter"] = requests.get(url=_watermeter).json()
                             if mwd:
                                 _liter = float(mwd.get("value", 0)) * 1000.00
-                                if _dws == 1:
+                                if _dws == 1 and self.taskstate == "starting":
                                     logger.debug(f"{name} is now strating, save watermeter data")
                                     self.waterdisplay = _liter
                                     states["watermeterdisplay"] = _liter
-                                elif _dws == 2:
+                                elif _dws == 2 and self.taskstate == "ending":
                                     logger.debug(f"{name} is now ending, calc the uses water consumption")
                                     if self.waterdisplay and _liter > self.waterdisplay:
                                         states["water_used"] = _liter - self.waterdisplay
@@ -601,46 +735,84 @@ class Homeconnect:
                                     states["watermeterdisplay"] = _liter
                                     states["water_used"] = float(0.00)
 
+                    # opitional tabs order
                     if _addOns.get("taps", None) and states.get("Started", 0):
                         _tabs = int(_addOns.get("taps", 20))
                         _tabsmin = int(_addOns.get("taps_min", 0))
                         states["ordertaps"] = (int(states.get("Started", 0)) % _tabs) < _tabsmin
 
-                states["hostname"] = __APPLICATION_NAME__
-                states["version"] = __version__
-                states["attribution"] = "Data provided by {}".format(__APPLICATION_NAME__)
+                    # optional save logdata and simulate data
+                    if _addOns.get("logfields", None):
+                        self.__saveLog__(states=states, fields=_addOns.get("logfields", None))
 
-                ## build the payload
-                logger.info("Build states payload")
-                payload = self.__buildPayload__(states=states)
-                if not payload:
-                    logger.critical("No payload (states) found!, no publish to MQTT Brocker !")
-                    return False
+            states["hostname"] = __APPLICATION_NAME__
+            states["version"] = __version__
+            states["attribution"] = "Data provided by {}".format(__APPLICATION_NAME__)
 
-                if states.get(int(states.get("ProgramProgress", 0)) > 0):
-                    self.__saveLog__(states=payload, fields=_addOns.get("logfields", None))
+            ## build the payload, loads the previous defaults and merge this with
+            ## the current states.
+            logger.info("Build states payload")
+            payload = self.__buildPayload__(states=states)
 
-                ## publish the new state
-                logger.info(f"{name} publish state data {states.get('wslink', 'unkown')} to {topic}")
-                payload = json.dumps(payload, ensure_ascii=True)
-                _result = client.publish(topic=topic, payload=payload, retain=True)
-                _status = _result[0]
+            # check the result and try to publish
+            if not payload:
+                logger.critical("No payload (states) found!, no publish to MQTT Brocker !")
+                return False
 
-                if _status == 0:
-                    logger.success(f"{name} ↠ {states.get('wslink', 'unkown')} publish send {topic} valid and finished")
-                    self.lastPayload = time.time()
-                else:
-                    logger.critical(f"{name} publish failed {topic}, {payload}")
-                return True
+            self.__logPayloadData__(states=payload, filename=f"{name}-simulate.csv")
+
+            ## publish the new state
+            logger.info(f"{name} publish state data {states.get('wslink', 'unkown')} to {topic}")
+            payload = json.dumps(payload, ensure_ascii=True)
+            _result = client.publish(topic=topic, payload=payload, retain=True)
+            _status = _result[0]
+            self.lastPayloadTime = time.time()
+
+            if _status == 0:
+                logger.success(f"{name} ↠ {states.get('wslink', 'unkown')} publish send {topic} valid and finished")
+            else:
+                logger.critical(f"{name} publish failed {topic}, {payload}")
+            return True
 
         except Exception as e:
             logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
             if _payload and name and self.mqtt_prefix:
-                _payload = self.err_message.getPayload(tag=f"{name} statechanged", message=str(e))
-                _topic = f"{self.mqtt_prefix}{name}/error"
-                client.publish(topic=_topic, payload=_payload, retain=True)
+                _payload = self.err_message.getPayload(name=f"{name} statechanged", message=str(e))
+                if _payload:
+                    _topic = f"{self.mqtt_prefix}{name}/error"
+                    client.publish(topic=_topic, payload=_payload, retain=True)
+                else:
+                    logger.critical("Can't create errormessage payload, check appliction settings")
 
         return False
+
+    def __pingDevice__(self, name: str = None):
+        """## Ping results from the decive
+
+        ### Args:
+            - `name (str, optional)`: device name. if None ping decive will be skipped. Defaults to None.
+        """
+        try:
+            if name and self.dev[name] and self.heartBeatMessage and self.heartBeatMessage[name]:
+                if self.dev[name].ws.host:
+                    _ping = ping(dest_addr=self.dev[name].ws.host, unit="ms", timeout=60)
+                    if self.heartBeatMessage[name].pingcount is None:
+                        self.heartBeatMessage[name].pingcount = 0
+                    if isinstance(_ping, float):
+                        self.heartBeatMessage[name].ping = round(_ping, 2)
+                        self.heartBeatMessage[name].pingcount += 1
+                    else:
+                        self.heartBeatMessage[name].pingerror += 1
+                        logger.debug(f"Ping packet loss from device {self.dev[name].ws.host} ")
+        except ping.errors.HostUnknown as e:
+            logger.critical(f"Ping Host {e.dest_addr} unknown")
+            self.heartBeatMessage[name].pingerror += 1
+        except ping.errors.PingError as e:
+            logger.critical(f"Ping Error Host {e.dest_addr}")
+            self.heartBeatMessage[name].pingerror += 1
+        except ping.errors.TimeToLiveExpired as e:
+            logger.critical((e.ip_header["src_addr"]))
+            self.heartBeatMessage[name].pingerror += 1
 
     def __sendHealthCheckMessage__(self, client):
         """send the HealthCheck message for each device"""
@@ -648,34 +820,30 @@ class Homeconnect:
             if not self.timeHealthCheck:
                 # disabled: skip
                 return
-            if client and self.dev and self.hearBeatMessage:
-                for name in self.hearBeatMessage:
-                    if self.lastPayload:
+            if client and self.dev and self.heartBeatMessage:
+                for name in self.heartBeatMessage:
+                    if self.lastPayloadTime:
                         self.__deviceReconnect__(logEnabled=False)
-                    if self.dev[name].ws.host:
-                        _ping = ping(self.dev[name].ws.host, unit="ms")
-                        if isinstance(_ping, float):
-                            self.hearBeatMessage[name].ping = round(_ping, 2)
+                    self.__pingDevice__(name=name)
                     ## Additional HealthCheck info
-                    self.hearBeatMessage[name].devices = len(self.dev)
-                    if self.lastPayload:
-                        self.hearBeatMessage[name].redelay = int(time.time() - self.lastPayload)
-                    self.hearBeatMessage[name].timereconnect = self.timereconnect
-                    self.hearBeatMessage[name].timeHealthCheck = self.timeHealthCheck
+                    self.heartBeatMessage[name].devices = len(self.dev)
+                    if self.lastPayloadTime:
+                        self.heartBeatMessage[name].redelay = int(time.time() - self.lastPayloadTime)
+                    self.heartBeatMessage[name].timereconnect = self.timereconnect
+                    self.heartBeatMessage[name].timeHealthCheck = self.timeHealthCheck
                     if self.addons.get(name, None):
-                        self.hearBeatMessage[name].addons = len(self.addons[name])
-                    self.hearBeatMessage[name].resfilter = self.resfilter
-                    self.hearBeatMessage[name].loglevel = self.LOGLEVEL
+                        self.heartBeatMessage[name].addons = len(self.addons[name])
+                    self.heartBeatMessage[name].resfilter = self.resfilter
+                    self.heartBeatMessage[name].loglevel = self.LOGLEVEL
                     ## publish the HealthCheck
                     _topic = f"{self.mqtt_prefix}{name}/healthscheck"
-                    _payload = self.hearBeatMessage[name].getPayload()
+                    _payload = self.heartBeatMessage[name].getPayload()
                     if _payload:
                         client.publish(topic=f"{_topic}", payload=_payload, retain=True)
                     time.sleep(1)
             else:
                 logger.critical("No HealthCheck message sendet, missing data")
         except Exception as e:
-
             logger.critical(f"{name} {str(e)}, line {sys.exc_info()[-1].tb_lineno}")
 
     def __deviceReconnect__(self, logEnabled: bool = True):
@@ -684,14 +852,19 @@ class Homeconnect:
             if not self.timereconnect:
                 # disabled: skip
                 return
-            if (int(time.time() - self.lastPayload)) > self.timereconnect:
+            if not self.lastPayloadTime:
+                return
+            if (int(time.time() - self.lastReconectTime)) < self.timereconnect:
+                return
+            if (int(time.time() - self.lastPayloadTime)) > self.timereconnect:
                 if logEnabled:
-                    logger.debug(f"checked timeslot: {int((time.time() - self.lastPayload))} > {self.timereconnect}")
+                    logger.debug(f"checked timeslot: {int((time.time() - self.lastPayloadTime))} > {self.timereconnect}")
                 for name in self.dev:
                     logger.debug(f"Reconnect Device: {name}")
-                    if self.timeHealthCheck and self.hearBeatMessage and self.hearBeatMessage.get(name, None):
-                        self.hearBeatMessage[name].reconnect = now()
                     self.dev[name].reconnect()
+                    self.lastReconectTime = time.time()
+                    if self.timeHealthCheck and self.heartBeatMessage and self.heartBeatMessage.get(name, None):
+                        self.heartBeatMessage[name].reconnect = now()
             else:
                 if logEnabled:
                     logger.debug("Reconnect Message skipped.")
@@ -724,6 +897,12 @@ class Homeconnect:
                             mqtt_active_program_topic = f"{self.mqtt_prefix}{device['name']}/activeProgram"
                             logger.debug(f"{device['name']}, program topic: {mqtt_active_program_topic}")
                             client.subscribe(mqtt_active_program_topic)
+                        # If the device has the SelectedProgram feature it allows programs to be
+                        # selected via /ro/selectedProgram
+                        if "BSH.Common.Root.SelectedProgram" == device["features"][value]["name"]:
+                            mqtt_selected_program_topic = f"{self.mqtt_prefix}{device['name']}/selectedProgram"
+                            logger.debug(f"{device['name']}, program topic: {mqtt_selected_program_topic}")
+                            client.subscribe(mqtt_selected_program_topic)
 
         def on_disconnect(client, userdata, flags, reason_code, properties):
             """mqtt brocker disconnect callback"""
@@ -779,9 +958,10 @@ class Homeconnect:
         try:
 
             """try to open the devices config file (created by hc login)"""
-            with open(self.devices_file, "r") as f:
-                devices = json.load(f)
-
+            devices = json.load(open(self.devices_file))
+            logger.debug(f"Devices setting loaded: {self.devices_file}")
+            # with open(self.devices_file, "r") as f:
+            #     devices = json.load(f)
             """register the mqtt brocker"""
             client = mqtt.Client(
                 mqtt.CallbackAPIVersion.VERSION2, client_id=self.mqtt_clientname, transport="tcp", reconnect_on_failure=True, protocol=mqtt.MQTTv5
@@ -789,6 +969,7 @@ class Homeconnect:
 
             if self.mqtt_username and self.mqtt_password:
                 client.username_pw_set(self.mqtt_username, self.mqtt_password)
+
             if self.mqtt_ssl:
                 if self.mqtt_cafile and self.mqtt_certfile and self.mqtt_keyfile:
                     client.tls_set(
@@ -808,6 +989,8 @@ class Homeconnect:
             client.on_disconnect = on_disconnect
             client.on_message = on_message
             client.on_publish = on_publish
+
+            logger.debug(f"Connect to {self.mqtt_host}:{self.mqtt_port}")
 
             client.connect(host=self.mqtt_host, port=self.mqtt_port, clean_start=mqtt.MQTT_CLEAN_START_FIRST_ONLY, properties=properties, keepalive=70)
 
@@ -831,8 +1014,8 @@ class Homeconnect:
 
                 # send HealthCheck message time see condig.json
                 if self.timeHealthCheck:
-                    logger.info(f"HealthCheck message enabled for {self.timeHealthCheck} seconds.")
-                    self.hearBeatMessage[_name] = HealthCheckMessage(name=_name)
+                    self.heartBeatMessage[_name] = HealthCheckMessage(name=_name)
+                    logger.success(f"HealthCheck message enabled for {_name}, time for healthcheck: {self.timeHealthCheck} seconds.")
                     schedule.every(interval=int(self.timeHealthCheck)).seconds.do(self.__sendHealthCheckMessage__, client=client)
                 else:
                     logger.debug("HealthCheck message disabled")
@@ -912,7 +1095,9 @@ class Homeconnect:
             logger.debug(f"MQTT Last Will {device['name']} Offline, Code={code}, Message={message} websocket closed !")
 
         while True:
+
             time.sleep(3)
+
             try:
                 """connect to the device"""
                 logger.info(f"{name} connecting to {host}")
@@ -923,17 +1108,26 @@ class Homeconnect:
                 ws = HCSocket(host=host, psk64=device["key"], iv64=device.get("iv", None), domain_suffix=domain_suffix, debug=self.debug)
                 self.dev[name] = HCDevice(ws=ws, device=device, resources=resources, debug=self.debug)
                 self.dev[name].run_forever(on_message=on_message, on_open=on_open, on_close=on_close)
-                self.__sendHealthCheckMessage__(client=client)
+                if self.heartBeatMessage and name:
+                    self.heartBeatMessage[name].errortime = "--"
+                    self.heartBeatMessage[name].lasterror = "--"
+                    self.__sendHealthCheckMessage__(client=client)
 
             except Exception as e:
+
                 logger.warning(f"{name}, ERROR  {str(e)}, line {sys.exc_info()[-1].tb_lineno}, Offline")
-                if self.hearBeatMessage and name:
-                    self.hearBeatMessage[name].errortime = now()
-                    self.hearBeatMessage[name].lasterror = str(e)
-                _payload = self.err_message.getPayload(tag=f"{name} connect", message=str(e))
+
+                if self.heartBeatMessage and name:
+                    self.heartBeatMessage[name].errortime = now()
+                    self.heartBeatMessage[name].lasterror = str(e)
+                _payload = self.err_message.getPayload(name=f"{name} connect", message=str(e))
                 if _payload:
                     client.publish(topic=f"{mqtt_topic}/error", payload=_payload, retain=True)
+                else:
+                    logger.critical("can't create errormessage payload, check appliction settings !")
+
                 client.publish(topic=f"{mqtt_topic}/LWT", payload="offline", retain=True)
+
             time.sleep(57)
 
 

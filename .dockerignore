@@ -6,7 +6,7 @@
 **/.aws
 **/.ssh
 **/.zip
-Dockerfile
+dockerfile
 README.md
 docker-compose.yml
 **/.DS_Store
@@ -16,11 +16,16 @@ test.app
 .vscode
 /tools
 /build
-/logs
+/test
+/images
+/.github
+/homeassistant/*.png
+/homeassistant/*.md
 .dockerignore
 .python-version
 **/test
 **/images
+/logs/*.log
 build.sh
 make_req.sh
-
+./repository.yaml

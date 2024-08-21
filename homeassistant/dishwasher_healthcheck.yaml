@@ -58,6 +58,43 @@ device_dishwasher_healthcheck_pack:
             - topic: "homeconnect/dishwasher/LWT"
           availability_mode: all
 
+        - name: "Verbindungen"
+          unique_id: "dishwasher_hc_pingcounts"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.pingcount|default(int(0))}}"
+          state_class: measurement
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Verbindungsfehler"
+          unique_id: "dishwasher_hc_pingerrors"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.pingerror|default(int(0))}}"
+          state_class: measurement
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
+        - name: "Verbindungsqualität"
+          unique_id: "dishwasher_hc_pingratio"
+          state_topic: "homeconnect/dishwasher/healthscheck"
+          value_template: "{{value_json.pingratio|default(int(1))}}"
+          state_class: measurement
+          unit_of_measurement: "%"
+          device:
+            name: "Homeconnect HealthCheck"
+            identifiers: "BOSCH-DISHWASHER_HealthCheck"
+          availability:
+            - topic: "homeconnect/dishwasher/LWT"
+          availability_mode: all
+
         - name: "Add Ons"
           unique_id: "dishwasher_hc_addons"
           state_topic: "homeconnect/dishwasher/healthscheck"
@@ -99,7 +136,7 @@ device_dishwasher_healthcheck_pack:
         - name: "Fehlermeldung"
           unique_id: "dishwasher_hc_lasterror"
           state_topic: "homeconnect/dishwasher/healthscheck"
-          value_template: "{{value_json.lasterror|default('Keine')}}"
+          value_template: "{{value_json.lasterror|default('Keiner')}}"
           icon: "mdi:alert-circle"
           device:
             name: "Homeconnect HealthCheck"
@@ -112,8 +149,7 @@ device_dishwasher_healthcheck_pack:
           unique_id: "dishwasher_hc_redelayk"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.redelay|default(int(0))}}"
-          state_class: measurement
-          unit_of_measurement: s
+          unit_of_measurement: min
           device_class: duration
           icon: mdi:run
           device:
@@ -142,7 +178,6 @@ device_dishwasher_healthcheck_pack:
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.elapsed|default(float(0))}}"
           icon: "mdi:timetable"
-          state_class: measurement
           unit_of_measurement: s
           device_class: duration
           entity_category: diagnostic
@@ -197,7 +232,6 @@ device_dishwasher_healthcheck_pack:
           unique_id: "dishwasher_hc_timeHealthCheck"
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.timeHealthCheck|default(int(0))}}"
-          state_class: measurement
           unit_of_measurement: s
           device_class: duration
           icon: mdi:run
@@ -214,7 +248,6 @@ device_dishwasher_healthcheck_pack:
           state_topic: "homeconnect/dishwasher/healthscheck"
           value_template: "{{value_json.timereconnect|default(float(0))}}"
           icon: "mdi:timetable"
-          state_class: measurement
           unit_of_measurement: s
           device_class: duration
           entity_category: diagnostic

@@ -4,7 +4,6 @@ click==8.1.6
 click_config_file==0.6.0
 loguru==0.7.2
 paho_mqtt==2.1.0
-pandas==2.2.2
 ping3==4.0.8
 pycryptodome==3.20.0
 python_dateutil==2.8.2

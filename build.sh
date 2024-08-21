@@ -15,7 +15,10 @@ docker stop ${CONTAINERLABEL} >/dev/null 2>&1
 docker rm ${CONTAINERLABEL} >/dev/null 2>&1
 
 echo "Try to remove docker logs for ${CONTAINERLABEL} ..."
-rm "/var/log/docker/zeusus_${CONTAINERLABEL}.log"
+sh -c 'echo "" > /var/log/docker/zeusus_${CONTAINERLABEL}.log'
+
+echo "Try to remove apps error logs for ${CONTAINERLABEL} ..."
+rm ${PWD}/logs/*.*
 
 echo "Build Docker Image ${DOCKERIMAGE}..."
 docker build -t ${DOCKERIMAGE} .
